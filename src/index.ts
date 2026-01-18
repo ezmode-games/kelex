@@ -18,3 +18,6 @@ export type {
   ComponentType,
   MappingRule,
 } from "./mapping";
+
+// Mapping functions
+export { defaultMappingRules, findMatchingRule } from "./mapping";
