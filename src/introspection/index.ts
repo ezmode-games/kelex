@@ -5,3 +5,5 @@ export type {
   FieldType,
   FormDescriptor,
 } from "./types";
+
+export { type UnwrapResult, unwrapSchema } from "./unwrap";
