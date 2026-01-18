@@ -1,3 +1,4 @@
+export { extractConstraints } from "./checks";
 export type {
   FieldConstraints,
   FieldDescriptor,
@@ -5,5 +6,4 @@ export type {
   FieldType,
   FormDescriptor,
 } from "./types";
-
 export { type UnwrapResult, unwrapSchema } from "./unwrap";

@@ -9,4 +9,4 @@ export type {
 } from "./introspection";
 
 // Introspection functions
-export { unwrapSchema } from "./introspection";
+export { extractConstraints, unwrapSchema } from "./introspection";
