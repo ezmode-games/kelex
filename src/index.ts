@@ -5,4 +5,8 @@ export type {
   FieldMetadata,
   FieldType,
   FormDescriptor,
+  UnwrapResult,
 } from "./introspection";
+
+// Introspection functions
+export { unwrapSchema } from "./introspection";
