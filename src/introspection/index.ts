@@ -1,4 +1,5 @@
 export { extractConstraints } from "./checks";
+export { type IntrospectOptions, introspect } from "./introspect";
 export type {
   FieldConstraints,
   FieldDescriptor,
