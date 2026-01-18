@@ -187,7 +187,7 @@ describe("defaultMappingRules", () => {
     it("matches number with range exactly 100", () => {
       const field = createField({
         type: "number",
-        constraints: { min: 0, max: 100 },
+        constraints: { min: 50, max: 150 },
       });
       expect(rule.match(field)).toBe(true);
     });
