@@ -180,6 +180,19 @@ describe("introspect", () => {
       expect(result.fields[0].label).toBe("URL");
       expect(result.fields[1].label).toBe("ID");
     });
+
+    it("handles acronyms followed by words", () => {
+      const schema = z.object({
+        URLPath: z.string(),
+        myURLPath: z.string(),
+        userID: z.number(),
+      });
+      const result = introspect(schema, defaultOptions);
+
+      expect(result.fields[0].label).toBe("URL Path");
+      expect(result.fields[1].label).toBe("My URL Path");
+      expect(result.fields[2].label).toBe("User ID");
+    });
   });
 
   describe("description handling", () => {

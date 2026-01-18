@@ -37,12 +37,14 @@ const SUPPORTED_TYPES = [
 
 /**
  * Converts a camelCase or PascalCase field name to a human-readable label.
- * Examples: "firstName" -> "First Name", "email" -> "Email", "isActive" -> "Is Active"
+ * Examples: "firstName" -> "First Name", "email" -> "Email", "isActive" -> "Is Active",
+ * "URLPath" -> "URL Path", "myURLPath" -> "My URL Path".
  * Preserves consecutive uppercase letters (acronyms) like "URL", "ID".
  */
 function nameToLabel(name: string): string {
   return name
-    .replace(/([a-z])([A-Z])/g, "$1 $2") // Insert space between lower and upper
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2") // Insert space between lower/digit and upper
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2") // Insert space between acronym and following word
     .replace(/^./, (s) => s.toUpperCase()) // Capitalize first letter
     .trim();
 }
