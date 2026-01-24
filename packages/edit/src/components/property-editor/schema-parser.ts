@@ -23,7 +23,8 @@ export function keyToLabel(key: string): string {
  * Get the innermost type from optional/nullable/default wrappers
  */
 function unwrapSchema(schema: z.ZodType): { inner: z.ZodType; optional: boolean; defaultValue?: unknown } {
-  let current = schema;
+  // Use 'unknown' for current to allow reassignment from internal types
+  let current: unknown = schema;
   let optional = false;
   let defaultValue: unknown;
 
@@ -51,7 +52,7 @@ function unwrapSchema(schema: z.ZodType): { inner: z.ZodType; optional: boolean;
     current = current.unwrap();
   }
 
-  return { inner: current, optional, defaultValue };
+  return { inner: current as z.ZodType, optional, defaultValue };
 }
 
 /**
@@ -68,7 +69,7 @@ function getFieldType(schema: z.ZodType): FieldType {
   if (inner instanceof z.ZodUnion) {
     // Check if all members are literals (enum-like) - Zod v4 uses .options directly
     const options = inner.options;
-    if (options.every((opt: z.ZodType) => opt instanceof z.ZodLiteral)) {
+    if (options.every((opt) => opt instanceof z.ZodLiteral)) {
       return "select";
     }
     return "unknown";
@@ -98,10 +99,10 @@ function getSelectOptions(schema: z.ZodType): SelectOption[] | undefined {
   if (inner instanceof z.ZodUnion) {
     // Zod v4 uses .options directly
     const options = inner.options;
-    if (options.every((opt: z.ZodType) => opt instanceof z.ZodLiteral)) {
-      return options.map((opt: z.ZodLiteral<unknown>) => {
-        // Zod v4 uses .value directly
-        const value = opt.value;
+    if (options.every((opt) => opt instanceof z.ZodLiteral)) {
+      return options.map((opt) => {
+        // Access the value property directly (we know it's a ZodLiteral from the every check)
+        const value = (opt as { value: unknown }).value;
         return {
           value: String(value),
           label: keyToLabel(String(value)),
@@ -214,7 +215,7 @@ function parseField(key: string, schema: z.ZodType): FieldMeta {
   if (type === "array" && inner instanceof z.ZodArray) {
     const elementType = inner.element;
     if (elementType) {
-      field.itemSchema = parseField("item", elementType);
+      field.itemSchema = parseField("item", elementType as z.ZodType);
     }
   }
 

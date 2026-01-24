@@ -27,7 +27,7 @@ import type { FieldError, FieldMeta, PropertyEditorProps } from "./types";
 /**
  * Debounce helper
  */
-function useDebounce<T extends (...args: unknown[]) => void>(
+function useDebounce<T extends (...args: Parameters<T>) => void>(
   callback: T,
   delay: number
 ): T {
@@ -86,7 +86,8 @@ export function PropertyEditor({
   // Sync local values with selected block props
   useEffect(() => {
     if (selectedBlock) {
-      setLocalValues(selectedBlock.props);
+      // Cast to Record<string, unknown> since BlockProps extends an interface
+      setLocalValues(selectedBlock.props as Record<string, unknown>);
       setInitialized(true);
       clearErrors();
     } else {
