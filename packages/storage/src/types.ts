@@ -225,6 +225,66 @@ export interface SchemaStorageConfig {
   pathPrefix?: string;
 }
 
+// Content Storage Types (PZ-302)
+
+/**
+ * Version information for stored content
+ */
+export const ContentVersionInfoSchema = z.object({
+  /** Version number (1-indexed) */
+  version: z.number().int().positive(),
+  /** Timestamp when this version was created */
+  createdAt: z.coerce.date(),
+  /** Size of the content in bytes */
+  size: z.number().int().nonnegative(),
+  /** R2 etag for the stored object */
+  etag: z.string(),
+});
+
+export type ContentVersionInfo = z.infer<typeof ContentVersionInfoSchema>;
+
+/**
+ * Metadata stored alongside each content version
+ */
+export const ContentMetadataSchema = z.object({
+  /** The guild this content belongs to */
+  guildId: z.string().min(1),
+  /** The page this content belongs to */
+  pageId: z.string().min(1),
+  /** Version number */
+  version: z.number().int().positive(),
+  /** Timestamp when created */
+  createdAt: z.coerce.date(),
+  /** Optional page title */
+  title: z.string().optional(),
+  /** Optional page description */
+  description: z.string().optional(),
+  /** Optional author ID */
+  authorId: z.string().optional(),
+});
+
+export type ContentMetadata = z.infer<typeof ContentMetadataSchema>;
+
+/**
+ * Stored content representation
+ */
+export const StoredContentSchema = z.object({
+  /** Metadata about this content version */
+  metadata: ContentMetadataSchema,
+  /** The MDX content */
+  content: z.string(),
+});
+
+export type StoredContent = z.infer<typeof StoredContentSchema>;
+
+/**
+ * Configuration for ContentStorageService
+ */
+export interface ContentStorageConfig {
+  /** Optional prefix for all content paths (defaults to empty) */
+  pathPrefix?: string;
+}
+
 // Response Storage Types (PZ-303)
 
 /**
