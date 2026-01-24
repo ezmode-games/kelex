@@ -8,6 +8,17 @@
 export { FormCanvas, useFormCanvas } from "./FormCanvas";
 export type { FormCanvasProps } from "./FormCanvas";
 
+// Palette component and hook (PZ-101)
+export { Palette, usePalette, defaultPresets } from "./Palette";
+export type {
+  PaletteProps,
+  PaletteItemData,
+  PaletteDropEvent,
+  PresetDefinition,
+  InputCategory,
+  RuleCategory,
+} from "./Palette";
+
 // Types and utilities
 export {
   // Schemas for runtime validation
