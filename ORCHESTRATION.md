@@ -34,7 +34,7 @@ Every issue follows this workflow. **Dependent issues cannot start until blockin
 │    - Read issue requirements                                    │
 │    - Implement feature                                          │
 │    - Write tests                                                │
-│    - Run local checks: pnpm test && pnpm lint && pnpm typecheck│
+│    - Run local checks: ./scripts/test-with-lock.sh && pnpm lint && pnpm typecheck│
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
@@ -401,7 +401,7 @@ Instructions:
 - Write comprehensive tests (aim for >80% coverage of new code)
 - Update package exports in index.ts
 - Run full check before committing:
-  pnpm install && pnpm build && pnpm test && pnpm lint && pnpm typecheck
+  pnpm install && pnpm build && ./scripts/test-with-lock.sh && pnpm lint && pnpm typecheck
 
 Deliverable:
 - All code committed to branch
@@ -555,7 +555,7 @@ git checkout main && git pull
 # Full validation
 pnpm install
 pnpm build
-pnpm test:all
+./scripts/test-with-lock.sh
 pnpm lint
 pnpm typecheck
 

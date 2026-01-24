@@ -168,3 +168,130 @@ export interface R2ClientConfig {
   /** Default metadata to apply to all puts */
   defaultMetadata?: Partial<StorageMetadata>;
 }
+
+// Schema Storage Types (PZ-301)
+
+/**
+ * Version information for a stored schema
+ */
+export const VersionInfoSchema = z.object({
+  /** Version number (1-indexed) */
+  version: z.number().int().positive(),
+  /** Timestamp when this version was created */
+  createdAt: z.coerce.date(),
+  /** Size of the schema JSON in bytes */
+  size: z.number().int().nonnegative(),
+  /** R2 etag for the stored object */
+  etag: z.string(),
+});
+
+export type VersionInfo = z.infer<typeof VersionInfoSchema>;
+
+/**
+ * Metadata stored alongside each schema version
+ */
+export const SchemaMetadataSchema = z.object({
+  /** The guild this schema belongs to */
+  guildId: z.string().min(1),
+  /** The form this schema belongs to */
+  formId: z.string().min(1),
+  /** Version number */
+  version: z.number().int().positive(),
+  /** Timestamp when created */
+  createdAt: z.coerce.date(),
+  /** Optional description of changes in this version */
+  description: z.string().optional(),
+});
+
+export type SchemaMetadata = z.infer<typeof SchemaMetadataSchema>;
+
+/**
+ * Serialized representation of a Zod schema stored in R2
+ */
+export const StoredSchemaSchema = z.object({
+  /** Metadata about this schema version */
+  metadata: SchemaMetadataSchema,
+  /** The serialized schema definition (JSON Schema format) */
+  schema: z.record(z.string(), z.unknown()),
+});
+
+export type StoredSchema = z.infer<typeof StoredSchemaSchema>;
+
+/**
+ * Configuration for SchemaStorageService
+ */
+export interface SchemaStorageConfig {
+  /** Optional prefix for all schema paths (defaults to empty) */
+  pathPrefix?: string;
+}
+
+// Response Storage Types (PZ-303)
+
+/**
+ * Status of a form response
+ */
+export const ResponseStatusSchema = z.enum(["pending", "accepted", "rejected"]);
+
+export type ResponseStatus = z.infer<typeof ResponseStatusSchema>;
+
+/**
+ * Form response data stored in R2
+ */
+export const FormResponseSchema = z.object({
+  /** Unique response ID */
+  id: z.string().min(1),
+  /** The form this response belongs to */
+  formId: z.string().min(1),
+  /** The guild this response belongs to */
+  guildId: z.string().min(1),
+  /** Schema version the response was created against */
+  schemaVersion: z.number().int().positive(),
+  /** The response data (validated against form schema) */
+  data: z.record(z.string(), z.unknown()),
+  /** Response status */
+  status: ResponseStatusSchema,
+  /** Timestamp when response was created */
+  createdAt: z.coerce.date(),
+  /** Timestamp when response was last updated */
+  updatedAt: z.coerce.date(),
+  /** Optional submitter identifier */
+  submitterId: z.string().optional(),
+  /** Optional reviewer identifier (who accepted/rejected) */
+  reviewerId: z.string().optional(),
+  /** Optional review notes */
+  reviewNotes: z.string().optional(),
+});
+
+export type FormResponse = z.infer<typeof FormResponseSchema>;
+
+/**
+ * Options for listing responses
+ */
+export interface ResponseListOptions {
+  /** Filter by status */
+  status?: ResponseStatus;
+  /** Maximum number of items to return */
+  limit?: number;
+  /** Pagination cursor */
+  cursor?: string;
+}
+
+/**
+ * Result of listing responses
+ */
+export interface ResponseListResult {
+  /** The response items */
+  items: FormResponse[];
+  /** Pagination cursor for next page (undefined if no more pages) */
+  cursor?: string;
+  /** Whether there are more items */
+  hasMore: boolean;
+}
+
+/**
+ * Configuration for ResponseStorageService
+ */
+export interface ResponseStorageConfig {
+  /** Optional prefix for all response paths (defaults to empty) */
+  pathPrefix?: string;
+}
