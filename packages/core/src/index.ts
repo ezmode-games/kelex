@@ -228,3 +228,25 @@ export type {
   UseFormPersistenceOptions,
   UseFormPersistenceReturn,
 } from "./persistence";
+
+// Form Submission Handler (PZ-007)
+export {
+  useFormSubmit,
+  // Factory functions for creating submission results
+  createSubmissionError,
+  createSuccessResult,
+  createErrorResult,
+  createValidationErrorResult,
+} from "./hooks";
+
+export type {
+  // Submission types
+  SubmissionStatus,
+  SubmissionErrorCode,
+  SubmissionError,
+  SubmissionResult,
+  SubmitFunction,
+  RetryConfig,
+  UseFormSubmitOptions,
+  UseFormSubmitReturn,
+} from "./hooks";
