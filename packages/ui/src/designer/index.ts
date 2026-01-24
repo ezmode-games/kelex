@@ -31,6 +31,38 @@ export type {
   RuleReorderEvent,
 } from "./PropertyEditor";
 
+// Conditional Logic component and hook (PZ-103)
+export {
+  ConditionalLogic,
+  useConditionalLogic,
+  ConditionRow,
+  ConditionGroupComponent,
+  VisibilityIndicator,
+  // Utilities
+  getCompatibleOperators,
+  uiConditionToVisibility,
+  uiGroupToVisibilityRules,
+  visibilityRulesToUIGroup,
+  createEmptyCondition,
+  createEmptyConditionGroup,
+  // Constants
+  OPERATOR_LABELS,
+  VALUE_FREE_OPERATORS,
+} from "./ConditionalLogic";
+export type {
+  ConditionalLogicProps,
+  UICondition,
+  UIConditionGroup,
+  VisibilityRulesChangeEvent,
+  ConditionAddEvent,
+  ConditionRemoveEvent,
+  ConditionUpdateEvent,
+  GroupOperatorChangeEvent,
+  ConditionRowProps,
+  ConditionGroupComponentProps,
+  VisibilityIndicatorProps,
+} from "./ConditionalLogic";
+
 // Types and utilities
 export {
   // Schemas for runtime validation
