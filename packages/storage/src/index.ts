@@ -4,8 +4,8 @@
  * Storage services for Cloudflare Workers and R2 including:
  * - R2 storage client (PZ-300)
  * - Schema storage service (PZ-301)
+ * - Content storage service (PZ-302)
  * - Response storage service (PZ-303)
- * - Content storage service (PZ-302) - TODO
  * - Asset storage service (PZ-304) - TODO
  */
 
@@ -25,6 +25,18 @@ export {
   type PutSchemaResult,
   type GetSchemaResult,
 } from "./schema-storage";
+
+// Content Storage Service (PZ-302)
+export {
+  ContentStorageService,
+  createContentStorageService,
+  type ContentStorageError,
+  type ContentStorageErrorCode,
+  type PutContentResult,
+  type GetContentResult,
+  type PutContentInput,
+  type PageInfo,
+} from "./content-storage";
 
 // Response Storage Service (PZ-303)
 export {
@@ -62,6 +74,11 @@ export type {
   StoredSchema,
   VersionInfo,
   SchemaStorageConfig,
+  // Content Storage Types (PZ-302)
+  ContentMetadata,
+  StoredContent,
+  ContentVersionInfo,
+  ContentStorageConfig,
   // Response Storage Types (PZ-303)
   FormResponse,
   ResponseStatus,
@@ -81,6 +98,10 @@ export {
   VersionInfoSchema,
   SchemaMetadataSchema,
   StoredSchemaSchema,
+  // Content Storage Schemas
+  ContentVersionInfoSchema,
+  ContentMetadataSchema,
+  StoredContentSchema,
   // Response Storage Schemas
   ResponseStatusSchema,
   FormResponseSchema,
