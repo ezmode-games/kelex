@@ -114,6 +114,31 @@ export type {
   SchemaImportErrorEvent,
 } from "./ExportImport";
 
+// Live Preview component and hook (PZ-107)
+export {
+  Preview,
+  usePreview,
+  FormPreview,
+  // Validation functions
+  validateFieldValue,
+  validateForm,
+  getInitialFieldValue,
+  createInitialFormValues,
+  // Constants
+  MOBILE_VIEWPORT_WIDTH,
+  DESKTOP_VIEWPORT_WIDTH,
+} from "./Preview";
+export type {
+  PreviewProps,
+  FormPreviewProps,
+  ViewportMode,
+  PreviewFieldError,
+  PreviewFormValues,
+  PreviewValueChangeEvent,
+  PreviewValidationEvent,
+} from "./Preview";
+
+
 // Form Templates component and utilities (PZ-106)
 export {
   TemplateSelector,

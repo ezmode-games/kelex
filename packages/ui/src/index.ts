@@ -78,6 +78,32 @@ export type {
   SchemaImportErrorEvent,
 } from "./designer";
 
+// Live Preview (PZ-107)
+export {
+  Preview,
+  usePreview,
+  FormPreview,
+  // Validation functions
+  validateFieldValue,
+  validateForm,
+  getInitialFieldValue,
+  createInitialFormValues,
+  // Constants
+  MOBILE_VIEWPORT_WIDTH,
+  DESKTOP_VIEWPORT_WIDTH,
+} from "./designer";
+
+export type {
+  PreviewProps,
+  FormPreviewProps,
+  ViewportMode,
+  PreviewFieldError,
+  PreviewFormValues,
+  PreviewValueChangeEvent,
+  PreviewValidationEvent,
+} from "./designer";
+
+
 // Form Templates (PZ-106)
 export {
   TemplateSelector,
