@@ -455,6 +455,8 @@ export class AssetStorageService {
 
   /**
    * List assets for a guild with optional type filter.
+   *
+   * Uses key-based pagination with startAfter for consistent cursor behavior.
    */
   async list(
     guildId: string,
@@ -468,9 +470,10 @@ export class AssetStorageService {
     const prefix = this.buildAssetsPrefix(guildId, options?.assetType);
     const limit = options?.limit ?? 50;
 
+    // Use startAfter for key-based pagination
     const listResult = await this.client.list({
       prefix,
-      cursor: options?.cursor,
+      startAfter: options?.cursor,
       limit: limit + 1, // Get one extra to check for more
     });
 
@@ -481,11 +484,16 @@ export class AssetStorageService {
     const assets: StoredAssetInfo[] = [];
     let hasMore = false;
     let cursor: string | undefined;
+    let lastProcessedKey: string | undefined;
 
     for (const obj of listResult.value.objects) {
+      lastProcessedKey = obj.key;
+
       if (assets.length >= limit) {
         hasMore = true;
-        cursor = obj.key;
+        // Use the last successfully added asset's key as cursor
+        const lastAsset = assets[assets.length - 1];
+        cursor = lastAsset ? lastAsset.key : lastProcessedKey;
         break;
       }
 
@@ -506,9 +514,9 @@ export class AssetStorageService {
     }
 
     // If we got a truncated result and haven't filled assets yet
-    if (!hasMore && listResult.value.truncated) {
+    if (!hasMore && listResult.value.truncated && lastProcessedKey) {
       hasMore = true;
-      cursor = listResult.value.cursor;
+      cursor = lastProcessedKey;
     }
 
     return ok({
