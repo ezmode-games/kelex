@@ -145,6 +145,43 @@ export {
   type VideoBlockProps,
 } from "./model";
 
+// Block Registry System with Components (PZ-201)
+export {
+  // Types
+  type BaseComponentBlockDefinition,
+  type BlockCategoryMeta,
+  type BlockComponentProps,
+  type BlockDefinition as ComponentBlockDefinition,
+  type BlockLoader,
+  type BlockRegistrationResult,
+  type ComponentBlockRegistry,
+  type ComponentBlockRegistryOptions,
+  type BlockCategory as ExtendedBlockCategory,
+  // Category metadata
+  BLOCK_CATEGORIES,
+  // Registry factory and utilities
+  createComponentBlockRegistry,
+  createDefaultComponentBlockRegistry,
+  getComponentBlockRegistry,
+  resetGlobalComponentBlockRegistry,
+  // Default block definitions with components
+  calloutComponentBlockDefinition,
+  codeComponentBlockDefinition,
+  columnsComponentBlockDefinition,
+  defaultComponentBlockDefinitions,
+  dividerComponentBlockDefinition,
+  embedComponentBlockDefinition,
+  formComponentBlockDefinition,
+  headingComponentBlockDefinition,
+  imageComponentBlockDefinition,
+  listComponentBlockDefinition,
+  paragraphComponentBlockDefinition,
+  quoteComponentBlockDefinition,
+  sectionComponentBlockDefinition,
+  tableComponentBlockDefinition,
+  videoComponentBlockDefinition,
+} from "./registry";
+
 // Placeholder - to be implemented in Phase 2
 export function BlockEditor(): never {
   throw new Error("Not implemented - see PZ-200: https://github.com/ezmode-games/phantom-zone/issues/41");
