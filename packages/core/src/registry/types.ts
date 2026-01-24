@@ -309,3 +309,110 @@ export interface InputRegistry {
   /** Clear all registrations */
   clear(): void;
 }
+
+/**
+ * Categories for validation rules.
+ */
+export type ValidationRuleCategory = "constraint" | "format" | "range";
+
+/**
+ * Props passed to rule configuration components.
+ * Generic over the configuration type C.
+ */
+export interface RuleConfigProps<C = unknown> {
+  /** Current rule configuration */
+  config: C;
+
+  /** Called when configuration changes */
+  onChange: (config: C) => void;
+
+  /** Whether the config form is disabled */
+  disabled?: boolean;
+}
+
+/**
+ * Placeholder component type for rule configuration.
+ * Since this is the core package, actual React components live in the UI package.
+ * This type allows storing a reference to a component that will be provided later.
+ */
+export type RuleConfigComponentRef = string;
+
+/**
+ * Schema transformer function type.
+ * Takes a Zod schema and returns a modified version with the validation applied.
+ *
+ * Note: We use unknown for both config and schema to avoid Zod version coupling
+ * at the type level. Runtime validation ensures correctness.
+ */
+export type ZodSchemaTransformer = (
+  config: unknown
+) => (schema: unknown) => unknown;
+
+/**
+ * Definition for a validation rule in the registry.
+ * Used by the form designer to show available rules and generate Zod schemas.
+ */
+export interface ValidationRuleDefinition {
+  /** Unique identifier for this rule (must match ValidationRuleId) */
+  id: ValidationRuleId;
+
+  /** Human-readable display name */
+  name: string;
+
+  /** Icon identifier (e.g., Lucide icon name) */
+  icon: string;
+
+  /** Rule category for grouping */
+  category: ValidationRuleCategory;
+
+  /** Input types this rule is compatible with */
+  compatibleInputs: InputTypeId[];
+
+  /**
+   * Reference to the configuration component.
+   * In core package, this is a string identifier.
+   * UI package maps these to actual React components.
+   */
+  configComponent: RuleConfigComponentRef;
+
+  /**
+   * Transform a Zod schema by applying this validation rule.
+   * Takes the rule config and returns a function that transforms the schema.
+   */
+  toZod: ZodSchemaTransformer;
+
+  /** Description shown in the rule palette */
+  description?: string;
+
+  /** Default configuration for this rule */
+  defaultConfig?: Record<string, unknown>;
+}
+
+/**
+ * The validation rule registry interface for managing registered rules.
+ */
+export interface ValidationRuleRegistry {
+  /** Register a new validation rule */
+  register(definition: ValidationRuleDefinition): void;
+
+  /** Get a rule definition by ID */
+  get(id: ValidationRuleId): ValidationRuleDefinition | undefined;
+
+  /** Get all registered rules */
+  getAll(): ValidationRuleDefinition[];
+
+  /** Get rules by category */
+  getByCategory(category: ValidationRuleCategory): ValidationRuleDefinition[];
+
+  /** Get rules compatible with a specific input type */
+  getCompatibleRules(inputType: InputTypeId): ValidationRuleDefinition[];
+
+  /** Check if a rule is registered */
+  has(id: ValidationRuleId): boolean;
+
+  /** Unregister a rule */
+  unregister(id: ValidationRuleId): boolean;
+
+  /** Clear all registrations */
+  clear(): void;
+}

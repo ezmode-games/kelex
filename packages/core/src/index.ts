@@ -32,6 +32,39 @@ export {
   textInputDefinition,
 } from "./registry";
 
+// Validation Rule Registry (PZ-001b)
+export {
+  // Registry factory and utilities
+  createValidationRuleRegistry,
+  createDefaultValidationRuleRegistry,
+  getValidationRuleRegistry,
+  resetGlobalRuleRegistry,
+  applyValidationRules,
+  // Default rule definitions - Constraint rules
+  defaultValidationRuleDefinitions,
+  requiredRuleDefinition,
+  minItemsRuleDefinition,
+  maxItemsRuleDefinition,
+  positiveRuleDefinition,
+  negativeRuleDefinition,
+  fileSizeRuleDefinition,
+  fileTypeRuleDefinition,
+  // Format rules
+  patternRuleDefinition,
+  emailRuleDefinition,
+  urlRuleDefinition,
+  uuidRuleDefinition,
+  integerRuleDefinition,
+  // Range rules
+  minLengthRuleDefinition,
+  maxLengthRuleDefinition,
+  minRuleDefinition,
+  maxRuleDefinition,
+  stepRuleDefinition,
+  minDateRuleDefinition,
+  maxDateRuleDefinition,
+} from "./registry";
+
 export type {
   // Core types
   AcceptedFile,
@@ -53,4 +86,12 @@ export type {
   SelectProps,
   TextAreaProps,
   TextInputProps,
+  // Validation rule types
+  AppliedRule,
+  RuleConfigProps,
+  RuleConfigComponentRef,
+  ValidationRuleCategory,
+  ValidationRuleDefinition,
+  ValidationRuleRegistry,
+  ZodSchemaTransformer,
 } from "./registry";
