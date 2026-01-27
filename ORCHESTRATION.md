@@ -1,6 +1,10 @@
 # Phantom Zone Orchestration Plan
 
-Autonomous execution plan for completing 47 open issues using agents, plugins, and skills.
+Autonomous execution plan for completing open issues using agents, plugins, and skills.
+
+> **Note:** Block editor (`packages/edit`) has been removed. Editor functionality is provided by
+> rafters (primitives, editor components, hooks). Block editor integration with phantom-zone
+> will be redesigned as a thin orchestration layer on top of rafters.
 
 ## Execution Strategy
 
@@ -9,11 +13,11 @@ Phase 0: Foundation (blocking)
     ↓
 Phase 1: Core Runtime + Storage (parallel)
     ↓
-Phase 2: Form Designer + Block Editor Core (parallel)
+Phase 2: Form Designer (parallel)
     ↓
-Phase 3: Advanced Features (parallel)
+Phase 3: Form Designer Advanced (parallel)
     ↓
-Phase 4: App Routes + Polish (parallel)
+Phase 4: App Routes (parallel)
 ```
 
 ---
@@ -130,7 +134,6 @@ Task 5: feature-dev:code-reviewer
      codegen/    # Zod-to-form code generator (existing)
      core/       # Runtime, validation, layout
      ui/         # React components, designer
-     edit/       # Block editor
      storage/    # R2/Cloudflare services
    apps/
      dashboard/  # Admin UI routes
@@ -232,9 +235,9 @@ Success criteria: Tests pass, typed client exported
 
 ---
 
-## Phase 2: Designer + Block Editor Core
+## Phase 2: Form Designer
 
-### Track 2A: Form Designer (packages/ui)
+### Form Designer (packages/ui)
 
 **Agent:** `frontend` subagent
 
@@ -261,62 +264,11 @@ Success criteria: Tests pass, typed client exported
 #39 (Live Preview - needs canvas + core runtime)
 ```
 
-### Track 2B: Block Editor Core (packages/edit)
-
-**Agent:** `frontend` subagent
-
-| Issue | Title | Dependencies |
-|-------|-------|--------------|
-| #41 | PZ-200: Block Document Model | None |
-| #42 | PZ-201: Block Registry System | #41 |
-| #43 | PZ-207: Block Selection & Focus | #41 |
-| #44 | PZ-209: Drag and Drop | #41, #43 |
-| #45 | PZ-210: Undo/Redo History | #41 |
-| #50 | PZ-206: Block Sidebar | #42 |
-| #51 | PZ-208: Block Property Editor | #42, #43 |
-
-**Execution Order:**
-```
-#41 (Document Model)
-    ↓
-#42, #43, #45 (parallel)
-    ↓
-#44, #50, #51 (parallel)
-```
-
 ---
 
-## Phase 3: Advanced Features
+## Phase 3: Form Designer Advanced
 
-### Track 3A: Block Types (packages/edit)
-
-**Agent:** `frontend` subagent
-
-| Issue | Title | Dependencies |
-|-------|-------|--------------|
-| #46 | PZ-202: Typography Blocks | Phase 2B |
-| #47 | PZ-203: Layout Blocks | Phase 2B |
-| #48 | PZ-204: Media Blocks | Phase 2B |
-| #49 | PZ-205: Form Blocks | Phase 2B + Phase 1A |
-
-**Execution:** All parallel after Phase 2B complete.
-
-### Track 3B: Editor Features (packages/edit)
-
-**Agent:** `frontend` subagent
-
-| Issue | Title | Dependencies |
-|-------|-------|--------------|
-| #52 | PZ-211: Clipboard Operations | Phase 2B |
-| #53 | PZ-212: MDX Serialization | Phase 2B |
-| #54 | PZ-213: Auto-Save & Versioning | Phase 2B + #31 |
-| #55 | PZ-214: Multi-Page Management | Phase 2B |
-| #56 | PZ-215: Slash Commands | Phase 2B |
-| #60 | PZ-218: Preview Modes | Phase 2B |
-
-**Execution:** All parallel after Phase 2B complete.
-
-### Track 3C: Form Designer Advanced (packages/ui)
+### Form Designer Advanced (packages/ui)
 
 **Agent:** `frontend` subagent
 
@@ -335,31 +287,19 @@ Success criteria: Tests pass, typed client exported
 
 ---
 
-## Phase 4: App Routes + Polish
+## Phase 4: App Routes
 
-### Track 4A: Dashboard Routes (apps/dashboard)
+### Dashboard Routes (apps/dashboard)
 
 **Agent:** `frontend` subagent
 
 | Issue | Title | Dependencies |
 |-------|-------|--------------|
 | #62 | PZ-400: Application Form Route | Phase 1A + 1B |
-| #63 | PZ-401: Form Designer Dashboard | Phase 2A + 1B |
-| #64 | PZ-402: Content Editor Dashboard | Phase 2B + 1B |
+| #63 | PZ-401: Form Designer Dashboard | Phase 2 + 1B |
 | #65 | PZ-403: Response Viewer | #33 |
 
 **Execution:** All parallel after their dependencies.
-
-### Track 4B: Polish (packages/edit)
-
-**Agent:** `frontend` subagent
-
-| Issue | Title | Dependencies |
-|-------|-------|--------------|
-| #76 | PZ-219: Collaborative Editing Indicators | Phase 3B |
-| #77 | PZ-220: Mobile Editor | Phase 2B |
-
-**Execution:** Parallel, run last.
 
 ---
 
