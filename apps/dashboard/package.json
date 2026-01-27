@@ -15,7 +15,7 @@
   "dependencies": {
     "@phantom-zone/core": "workspace:*",
     "@phantom-zone/ui": "workspace:*",
-    "@phantom-zone/edit": "workspace:*",
+
     "@phantom-zone/storage": "workspace:*"
   },
   "devDependencies": {

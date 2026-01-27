@@ -6,7 +6,7 @@
       "@phantom-zone/codegen": ["packages/codegen/src"],
       "@phantom-zone/core": ["packages/core/src"],
       "@phantom-zone/ui": ["packages/ui/src"],
-      "@phantom-zone/edit": ["packages/edit/src"],
+
       "@phantom-zone/storage": ["packages/storage/src"]
     }
   },
@@ -14,7 +14,7 @@
     { "path": "packages/codegen" },
     { "path": "packages/core" },
     { "path": "packages/ui" },
-    { "path": "packages/edit" },
+
     { "path": "packages/storage" },
     { "path": "apps/dashboard" }
   ],
