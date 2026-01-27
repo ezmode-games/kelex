@@ -1,8 +1,27 @@
 # Codebase Architecture
 
+# Codebase Architecture
+
+## Key Architectural Decision
+
+Phantom-zone is built ON rafters. Rafters provides the design system, UI primitives,
+editor components, and hooks. Phantom-zone provides form-specific business logic,
+code generation, and storage.
+
+- **Input side:** phantom-zone's editor and designer use rafters components
+- **Output side:** codegen generates forms that import from `@/components/ui` (shadcn/rafters API compatible)
+- **Rafters components are NOT reimplemented** — phantom-zone is a thin orchestration layer
+
 ## Package Dependencies
 
 ```
+@rafters/ui (external - sister project)
+    ├── components/editor: BlockCanvas, BlockWrapper, BlockSidebar, PropertyEditor,
+    │                      EditorToolbar, CommandPaletteUI, InlineToolbar
+    ├── components/media: Image, Embed
+    ├── hooks: useBlockSelection, useHistory, useDragDrop, useClipboard, useCommandPalette
+    └── primitives: selection, history, drag-drop, clipboard, command-palette, etc.
+
 @phantom-zone/codegen (CLI + API for code generation)
     └── Uses Zod 4 for schema introspection
 
@@ -18,15 +37,48 @@
 
 @phantom-zone/ui (form designer components)
     └── Depends on: @phantom-zone/core
-    └── Uses: dnd-kit for drag-and-drop
 
-@phantom-zone/edit (block editor)
-    └── Block document model and registry
+@phantom-zone/edit (thin layer on rafters - TO BE REBUILT)
+    └── Depends on: @rafters/ui, @phantom-zone/core, @phantom-zone/storage
+    ├── blocks/        - Block type definitions + renderers (wrapping rafters components)
+    ├── editor/        - Composed PageEditor wiring rafters components together
+    ├── persistence/   - Auto-save + versioning via @phantom-zone/storage
+    ├── serialization/ - MDX import/export
+    └── pages/         - Multi-page management
 
 @phantom-zone/storage (Cloudflare services)
     └── R2 storage client
     └── Schema, response, content, asset services
 ```
+
+## Rafters Block Model
+
+The block model comes from rafters:
+```typescript
+interface Block {
+  id: string;
+  type: string;
+  props: Record<string, unknown>;
+  children?: Block[];
+}
+
+interface BlockDefinition {
+  type: string;
+  label: string;
+  description?: string;
+  icon?: string;
+  category: string;
+  keywords?: string[];
+}
+
+interface BlockRegistry {
+  blocks: BlockDefinition[];
+  categories: { id: string; label: string; order?: number }[];
+}
+```
+
+Phantom-zone provides block renderers via `BlockCanvas.renderBlock` and
+Zod schemas per block type for `PropertyEditor`.
 
 ## Key Modules
 
@@ -54,23 +106,17 @@
 - Schema export/import
 - Live preview
 
-### packages/edit
-- Block document model
-- Block registry system
-- Block selection & focus
-- Drag and drop
-- Undo/redo history
-- Block types: typography, layout, media, form
-
 ## Design Patterns
 
 1. **Registry Pattern:** Input and validation rule registries allow extensibility
 2. **Visitor/Introspection:** Schema introspection walks Zod schema tree
-3. **Engine Pattern:** Layout engine computes derived state from config + values
-4. **Composition:** Rule composer combines validation rules
+3. **Composition:** Rafters provides primitives, PZ composes them
+4. **Thin Wrapper:** Block renderers wrap rafters components with PZ-specific schemas
 
 ## Testing Strategy
 
 - Unit tests alongside source: `test/` mirrors `src/`
 - Test runner: Vitest
 - Lock file prevents parallel test execution (shared resources)
+- Component testing: Vitest + @testing-library/react + happy-dom (NOT playwright-ct)
+- Avoid playwright-ct — causes memory blowup and thermal shutdown
