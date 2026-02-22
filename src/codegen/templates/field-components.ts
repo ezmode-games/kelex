@@ -125,8 +125,11 @@ function buildCheckboxJSX(): string {
 }
 
 function buildSelectJSX(props: Record<string, unknown>): string {
-  const options = (props.options as string[]) ?? [];
-  const optionItems = options
+  const options = props.options;
+  if (!Array.isArray(options) || options.length === 0) {
+    throw new Error("Select component requires a non-empty options array");
+  }
+  const optionItems = (options as string[])
     .map(
       (opt) =>
         `          <Select.Item value="${escapeJSXAttribute(opt)}">${escapeJSXText(formatOptionLabel(opt))}</Select.Item>`,
@@ -147,8 +150,11 @@ function buildRadioGroupJSX(
   fieldName: string,
   props: Record<string, unknown>,
 ): string {
-  const options = (props.options as string[]) ?? [];
-  const radioItems = options
+  const options = props.options;
+  if (!Array.isArray(options) || options.length === 0) {
+    throw new Error("RadioGroup component requires a non-empty options array");
+  }
+  const radioItems = (options as string[])
     .map((opt) => {
       const id = `${fieldName}-${opt}`;
       return `        <div className="flex items-center gap-2">
@@ -205,7 +211,6 @@ function buildPropsString(
 }
 
 function formatOptionLabel(value: string): string {
-  // Convert camelCase/snake_case to readable format with first letter capitalized
   return value
     .replace(/([a-z])([A-Z])/g, "$1 $2")
     .replace(/_/g, " ")

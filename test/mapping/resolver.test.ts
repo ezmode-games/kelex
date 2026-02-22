@@ -12,6 +12,7 @@ function createField(
     label: "Test Field",
     type: "string",
     isOptional: false,
+    isNullable: false,
     constraints: {},
     metadata: { kind: "string" },
   };

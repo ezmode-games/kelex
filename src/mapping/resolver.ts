@@ -1,5 +1,5 @@
 import type { FieldDescriptor } from "../introspection";
-import { defaultMappingRules } from "./default-map";
+import { defaultMappingRules, findMatchingRule } from "./default-map";
 import type { ComponentConfig, MappingRule } from "./types";
 
 /**
@@ -12,7 +12,7 @@ export function resolveField(
   field: FieldDescriptor,
   rules: MappingRule[] = defaultMappingRules,
 ): ComponentConfig {
-  const matchedRule = rules.find((rule) => rule.match(field));
+  const matchedRule = findMatchingRule(field, rules);
 
   if (!matchedRule) {
     throw new Error(

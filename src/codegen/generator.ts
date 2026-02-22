@@ -44,31 +44,21 @@ export function generate(options: GenerateOptions): GenerateResult {
     uiImportPath = "@/components/ui",
   } = options;
 
-  const warnings: string[] = [];
   const processedFields: string[] = [];
   const fieldConfigs = new Map<string, ComponentConfig>();
 
-  // 1. Introspect schema -> FormDescriptor
   const formDescriptor = introspect(schema, {
     formName,
     schemaImportPath,
     schemaExportName,
   });
 
-  // 2. For each field, resolve -> ComponentConfig
   for (const field of formDescriptor.fields) {
-    try {
-      const config = resolveField(field);
-      fieldConfigs.set(field.name, config);
-      processedFields.push(field.name);
-    } catch (error) {
-      // Add warning and skip field
-      const message = error instanceof Error ? error.message : "Unknown error";
-      warnings.push(`Field "${field.name}": ${message}`);
-    }
+    const config = resolveField(field);
+    fieldConfigs.set(field.name, config);
+    processedFields.push(field.name);
   }
 
-  // 3. Generate form wrapper with all fields
   const code = generateFormFile({
     form: formDescriptor,
     fieldConfigs,
@@ -78,6 +68,6 @@ export function generate(options: GenerateOptions): GenerateResult {
   return {
     code,
     fields: processedFields,
-    warnings,
+    warnings: formDescriptor.warnings ?? [],
   };
 }

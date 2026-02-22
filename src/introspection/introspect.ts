@@ -55,14 +55,26 @@ function nameToLabel(name: string): string {
 function buildMetadata(inner: $ZodType): FieldMetadata {
   const def = inner._zod.def as { type: string };
 
-  if (def.type === "enum") {
-    const enumDef = def as ZodEnumDef;
-    // Zod 4 stores enum values in entries object: {a: 'a', b: 'b'}
-    const values = Object.keys(enumDef.entries);
-    return { kind: "enum", values };
+  switch (def.type) {
+    case "enum": {
+      const enumDef = def as ZodEnumDef;
+      const values = Object.keys(enumDef.entries);
+      if (values.length === 0) {
+        throw new Error("Enum field has zero values");
+      }
+      return { kind: "enum", values };
+    }
+    case "string":
+      return { kind: "string" };
+    case "number":
+      return { kind: "number" };
+    case "boolean":
+      return { kind: "boolean" };
+    case "date":
+      return { kind: "date" };
+    default:
+      throw new Error(`Unsupported type "${def.type}" in buildMetadata`);
   }
-
-  return { kind: def.type as "string" | "number" | "boolean" | "date" };
 }
 
 /**
@@ -82,11 +94,11 @@ export function introspect(
   }
 
   const fields: FieldDescriptor[] = [];
+  const warnings: string[] = [];
 
   for (const [name, fieldSchema] of Object.entries(def.shape)) {
-    const { inner, isOptional } = unwrapSchema(fieldSchema);
-    const innerDef = inner._zod.def as { type: string };
-    const type = innerDef.type;
+    const { inner, isOptional, isNullable } = unwrapSchema(fieldSchema);
+    const type = (inner._zod.def as { type: string }).type;
 
     if (!SUPPORTED_TYPES.includes(type as FieldType)) {
       throw new Error(
@@ -94,27 +106,29 @@ export function introspect(
       );
     }
 
-    const fieldType = type as FieldType;
-    const constraints = extractConstraints(inner);
-    const metadata = buildMetadata(inner);
+    const unknownChecks: string[] = [];
+    const constraints = extractConstraints(inner, unknownChecks);
 
-    // Get description from inner schema (describe() is on the unwrapped schema)
-    const description = (inner as { description?: string }).description;
-
-    const field: FieldDescriptor = {
-      name,
-      label: nameToLabel(name),
-      type: fieldType,
-      isOptional,
-      constraints,
-      metadata,
-    };
-
-    if (description) {
-      field.description = description;
+    for (const check of unknownChecks) {
+      warnings.push(
+        `Field "${name}": unknown Zod check "${check}" -- constraint not reflected in generated form`,
+      );
     }
 
-    fields.push(field);
+    const description =
+      (inner as { description?: string }).description ??
+      (fieldSchema as { description?: string }).description;
+
+    fields.push({
+      name,
+      label: nameToLabel(name),
+      type: type as FieldType,
+      isOptional,
+      isNullable,
+      constraints,
+      metadata: buildMetadata(inner),
+      ...(description ? { description } : {}),
+    });
   }
 
   return {
@@ -122,5 +136,6 @@ export function introspect(
     fields,
     schemaImportPath: options.schemaImportPath,
     schemaExportName: options.schemaExportName,
+    ...(warnings.length > 0 ? { warnings } : {}),
   };
 }

@@ -16,6 +16,14 @@ interface ZodCheck {
   isInt?: boolean;
 }
 
+const KNOWN_FORMATS = new Set([
+  "email",
+  "url",
+  "uuid",
+  "cuid",
+  "datetime",
+] as const);
+
 /**
  * Extracts validation constraints from a Zod schema's checks array.
  * Must be called on unwrapped schema (not optional wrapper).
@@ -23,7 +31,10 @@ interface ZodCheck {
  * If called on an optional wrapper schema, this function will simply return
  * an empty object, because optional wrappers themselves do not carry checks.
  */
-export function extractConstraints(schema: $ZodType): FieldConstraints {
+export function extractConstraints(
+  schema: $ZodType,
+  unknownChecks?: string[],
+): FieldConstraints {
   const def = schema._zod.def as {
     type: string;
     checks?: ZodCheck[];
@@ -41,7 +52,6 @@ export function extractConstraints(schema: $ZodType): FieldConstraints {
     if (!checkDef) continue;
 
     switch (checkDef.check) {
-      // String length checks
       case "min_length":
         if (checkDef.minimum !== undefined) {
           constraints.minLength = checkDef.minimum;
@@ -54,24 +64,19 @@ export function extractConstraints(schema: $ZodType): FieldConstraints {
         }
         break;
 
-      // String format checks (email, url, uuid, regex, etc.)
       case "string_format":
         if (checkDef.format === "regex" && checkDef.pattern) {
           constraints.pattern = checkDef.pattern.source;
-        } else if (checkDef.format === "email") {
-          constraints.format = "email";
-        } else if (checkDef.format === "url") {
-          constraints.format = "url";
-        } else if (checkDef.format === "uuid") {
-          constraints.format = "uuid";
-        } else if (checkDef.format === "cuid") {
-          constraints.format = "cuid";
-        } else if (checkDef.format === "datetime") {
-          constraints.format = "datetime";
+        } else if (
+          checkDef.format &&
+          KNOWN_FORMATS.has(
+            checkDef.format as FieldConstraints["format"] & string,
+          )
+        ) {
+          constraints.format = checkDef.format as FieldConstraints["format"];
         }
         break;
 
-      // Number range checks
       case "greater_than":
         if (checkDef.value !== undefined) {
           constraints.min = checkDef.value;
@@ -84,18 +89,20 @@ export function extractConstraints(schema: $ZodType): FieldConstraints {
         }
         break;
 
-      // Number format check (int)
       case "number_format":
         if (check.isInt) {
           constraints.isInt = true;
         }
         break;
 
-      // Number multipleOf
       case "multiple_of":
         if (checkDef.value !== undefined) {
           constraints.step = checkDef.value;
         }
+        break;
+
+      default:
+        unknownChecks?.push(checkDef.check);
         break;
     }
   }

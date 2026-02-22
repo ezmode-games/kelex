@@ -88,6 +88,7 @@ describe("Introspection Types", () => {
         label: "Email",
         type: "string",
         isOptional: false,
+        isNullable: false,
         constraints: { format: "email" },
         metadata: { kind: "string" },
       };
@@ -106,6 +107,7 @@ describe("Introspection Types", () => {
         description: "Tell us about yourself",
         type: "string",
         isOptional: true,
+        isNullable: false,
         constraints: { maxLength: 500 },
         metadata: { kind: "string" },
       };
@@ -118,6 +120,7 @@ describe("Introspection Types", () => {
         label: "Role",
         type: "enum",
         isOptional: false,
+        isNullable: false,
         constraints: {},
         metadata: { kind: "enum", values: ["admin", "user"] as const },
       };
@@ -135,6 +138,7 @@ describe("Introspection Types", () => {
         label: "Email",
         type: "string",
         isOptional: false,
+        isNullable: false,
         constraints: { format: "email" },
         metadata: { kind: "string" },
       };

@@ -85,6 +85,7 @@ describe("Mapping Types", () => {
       label: "Email",
       type: "string",
       isOptional: false,
+      isNullable: false,
       constraints: { format: "email" },
       metadata: { kind: "string" },
     };
@@ -94,6 +95,7 @@ describe("Mapping Types", () => {
       label: "Age",
       type: "number",
       isOptional: true,
+      isNullable: false,
       constraints: { min: 0, max: 150 },
       metadata: { kind: "number" },
     };

@@ -41,6 +41,9 @@ export interface FieldDescriptor {
   /** Whether wrapped in z.optional() */
   isOptional: boolean;
 
+  /** Whether wrapped in z.nullable() */
+  isNullable: boolean;
+
   /** Validation constraints */
   constraints: FieldConstraints;
 
@@ -61,4 +64,7 @@ export interface FormDescriptor {
 
   /** Exported schema name */
   schemaExportName: string;
+
+  /** Warnings from introspection (e.g., unknown Zod checks) */
+  warnings?: string[];
 }
