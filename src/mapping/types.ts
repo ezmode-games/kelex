@@ -8,7 +8,10 @@ export type ComponentType =
   | "Checkbox"
   | "RadioGroup"
   | "Slider"
-  | "DatePicker";
+  | "DatePicker"
+  | "Fieldset"
+  | "FieldArray"
+  | "UnionSwitch";
 
 /** Configuration for rendering a single field */
 export interface ComponentConfig {

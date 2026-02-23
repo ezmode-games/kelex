@@ -63,7 +63,7 @@ describe("generate", () => {
   });
 
   describe("options", () => {
-    it("uses default UI import path when not specified", () => {
+    it("generates primitives and imports from ./primitives when no uiImportPath", () => {
       const schema = z.object({
         name: z.string(),
       });
@@ -75,7 +75,11 @@ describe("generate", () => {
         schemaExportName: "testSchema",
       });
 
-      expect(result.code).toContain("from '@/components/ui'");
+      expect(result.code).toContain("from './primitives'");
+      expect(result.primitives).toBeDefined();
+      expect(result.primitives).toContain("export function Field");
+      expect(result.primitives).toContain("export function Button");
+      expect(result.primitives).toContain("export function Input");
     });
 
     it("uses custom UI import path when specified", () => {
@@ -92,6 +96,7 @@ describe("generate", () => {
       });
 
       expect(result.code).toContain("from '@/components/ui'");
+      expect(result.primitives).toBeUndefined();
     });
 
     it("uses provided form name", () => {
@@ -369,7 +374,7 @@ describe("generate", () => {
       expect(result.code).toContain("import { userSchema, type User }");
       expect(result.code).toContain("export function UserForm");
       expect(result.code).toContain("onSubmit: userSchema");
-      expect(result.code).toContain('<button type="submit">Submit</button>');
+      expect(result.code).toContain('<Button type="submit">Submit</Button>');
 
       // No warnings
       expect(result.warnings).toEqual([]);

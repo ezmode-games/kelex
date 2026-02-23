@@ -16,8 +16,13 @@ describe("Introspection Types", () => {
         "boolean",
         "date",
         "enum",
+        "object",
+        "array",
+        "union",
+        "tuple",
+        "record",
       ];
-      expect(types).toHaveLength(5);
+      expect(types).toHaveLength(10);
     });
   });
 
@@ -148,6 +153,7 @@ describe("Introspection Types", () => {
         fields: [emailField],
         schemaImportPath: "./schema",
         schemaExportName: "userSchema",
+        warnings: [],
       };
 
       expect(form.name).toBe("UserForm");
@@ -163,6 +169,7 @@ describe("Introspection Types", () => {
           label: "First Name",
           type: "string",
           isOptional: false,
+          isNullable: false,
           constraints: { minLength: 1 },
           metadata: { kind: "string" },
         },
@@ -171,6 +178,7 @@ describe("Introspection Types", () => {
           label: "Age",
           type: "number",
           isOptional: true,
+          isNullable: false,
           constraints: { min: 0, max: 150 },
           metadata: { kind: "number" },
         },
@@ -179,6 +187,7 @@ describe("Introspection Types", () => {
           label: "Is Active",
           type: "boolean",
           isOptional: false,
+          isNullable: false,
           constraints: {},
           metadata: { kind: "boolean" },
         },
@@ -189,6 +198,7 @@ describe("Introspection Types", () => {
         fields,
         schemaImportPath: "@/schemas/profile",
         schemaExportName: "profileSchema",
+        warnings: [],
       };
 
       expect(form.fields).toHaveLength(3);

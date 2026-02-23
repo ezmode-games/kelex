@@ -25,11 +25,9 @@ const KNOWN_FORMATS = new Set([
 ] as const);
 
 /**
- * Extracts validation constraints from a Zod schema's checks array.
- * Must be called on unwrapped schema (not optional wrapper).
- *
- * If called on an optional wrapper schema, this function will simply return
- * an empty object, because optional wrappers themselves do not carry checks.
+ * Extracts validation constraints from a Zod schema's checks array
+ * and top-level def properties (format for z.email()/z.url()/z.uuid()).
+ * Must be called on unwrapped schema (not optional/nullable wrapper).
  */
 export function extractConstraints(
   schema: $ZodType,
@@ -37,15 +35,30 @@ export function extractConstraints(
 ): FieldConstraints {
   const def = schema._zod.def as {
     type: string;
+    format?: string;
     checks?: ZodCheck[];
   };
 
-  const checks = def.checks;
-  if (!checks || !Array.isArray(checks)) {
-    return {};
+  const constraints: FieldConstraints = {};
+
+  // Zod v4 top-level format (z.email(), z.url(), z.uuid() set def.format directly)
+  if (def.format && def.type === "string") {
+    const fmt = def.format;
+    if (
+      fmt === "email" ||
+      fmt === "url" ||
+      fmt === "uuid" ||
+      fmt === "cuid" ||
+      fmt === "datetime"
+    ) {
+      constraints.format = fmt;
+    }
   }
 
-  const constraints: FieldConstraints = {};
+  const checks = def.checks;
+  if (!checks || !Array.isArray(checks)) {
+    return constraints;
+  }
 
   for (const check of checks) {
     const checkDef = check._zod?.def;
@@ -54,13 +67,22 @@ export function extractConstraints(
     switch (checkDef.check) {
       case "min_length":
         if (checkDef.minimum !== undefined) {
-          constraints.minLength = checkDef.minimum;
+          // For array types, store as minItems
+          if (def.type === "array") {
+            constraints.minItems = checkDef.minimum;
+          } else {
+            constraints.minLength = checkDef.minimum;
+          }
         }
         break;
 
       case "max_length":
         if (checkDef.maximum !== undefined) {
-          constraints.maxLength = checkDef.maximum;
+          if (def.type === "array") {
+            constraints.maxItems = checkDef.maximum;
+          } else {
+            constraints.maxLength = checkDef.maximum;
+          }
         }
         break;
 

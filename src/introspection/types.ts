@@ -1,5 +1,15 @@
 /** Supported field types after unwrapping */
-export type FieldType = "string" | "number" | "boolean" | "date" | "enum";
+export type FieldType =
+  | "string"
+  | "number"
+  | "boolean"
+  | "date"
+  | "enum"
+  | "object"
+  | "array"
+  | "union"
+  | "tuple"
+  | "record";
 
 /** Validation constraints extracted from Zod checks */
 export interface FieldConstraints {
@@ -14,6 +24,10 @@ export interface FieldConstraints {
   max?: number;
   step?: number;
   isInt?: boolean;
+
+  // Array constraints
+  minItems?: number;
+  maxItems?: number;
 }
 
 /** Type-specific metadata */
@@ -22,7 +36,16 @@ export type FieldMetadata =
   | { kind: "number" }
   | { kind: "boolean" }
   | { kind: "date" }
-  | { kind: "enum"; values: readonly string[] };
+  | { kind: "enum"; values: readonly string[] }
+  | { kind: "object"; fields: FieldDescriptor[] }
+  | { kind: "array"; element: FieldDescriptor }
+  | {
+      kind: "union";
+      discriminator?: string;
+      variants: { value: string; fields: FieldDescriptor[] }[];
+    }
+  | { kind: "tuple"; elements: FieldDescriptor[] }
+  | { kind: "record"; valueDescriptor: FieldDescriptor };
 
 /** Single field descriptor */
 export interface FieldDescriptor {
@@ -65,6 +88,6 @@ export interface FormDescriptor {
   /** Exported schema name */
   schemaExportName: string;
 
-  /** Warnings from introspection (e.g., unknown Zod checks) */
-  warnings?: string[];
+  /** Warnings from introspection (e.g., skipped features) */
+  warnings: string[];
 }
