@@ -77,7 +77,7 @@ async function runGenerate(
     );
   }
 
-  if (!schema || typeof schema !== "object" || !("_zod" in schema)) {
+  if (typeof schema !== "object" || !("_zod" in schema)) {
     throw new Error(
       `Export "${schemaExportName}" is not a Zod schema. Ensure you are using zod >= 4.0.0`,
     );
