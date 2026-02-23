@@ -64,15 +64,12 @@ function generateImports(
 ): string {
   const lines: string[] = [];
 
-  // TanStack Form import
   lines.push("import { useForm } from '@tanstack/react-form';");
 
-  // UI component imports
   const usedComponents = getUsedComponents(fieldConfigs);
   const uiImports = buildUIImports(usedComponents);
   lines.push(`import {\n${uiImports}\n} from '${uiImportPath}';`);
 
-  // Schema import
   const typeName = inferTypeName(form.schemaExportName);
   lines.push(
     `import { ${form.schemaExportName}, type ${typeName} } from '${form.schemaImportPath}';`,
@@ -84,32 +81,22 @@ function generateImports(
 function getUsedComponents(
   fieldConfigs: Map<string, ComponentConfig>,
 ): Set<ComponentType> {
-  const components = new Set<ComponentType>();
-
-  for (const config of fieldConfigs.values()) {
-    components.add(config.component);
-  }
-
-  return components;
+  return new Set(
+    Array.from(fieldConfigs.values(), (config) => config.component),
+  );
 }
 
 function buildUIImports(usedComponents: Set<ComponentType>): string {
-  const imports: string[] = [];
+  const imports: string[] = ["  Field,"];
 
-  // Always include Field wrapper
-  imports.push("  Field,");
-
-  // Add used components
   for (const component of usedComponents) {
     imports.push(`  ${component},`);
   }
 
-  // Include Label if RadioGroup is used
   if (usedComponents.has("RadioGroup")) {
     imports.push("  Label,");
   }
 
-  // Sort all imports alphabetically for consistent output
   return imports.sort().join("\n");
 }
 
@@ -118,16 +105,9 @@ function buildUIImports(usedComponents: Set<ComponentType>): string {
  * userSchema -> User
  * profileSchema -> Profile
  */
-function inferTypeName(schemaExportName: string): string {
-  // Remove 'Schema' or 'schema' suffix
+export function inferTypeName(schemaExportName: string): string {
   const stripped = schemaExportName.replace(/Schema$/i, "");
-
-  // If nothing remains after stripping, fall back to a safe default
-  if (stripped.trim().length === 0) {
-    return "Schema";
-  }
-
-  // Capitalize first letter of the remaining base
+  if (!stripped) return "Schema";
   return stripped.replace(/^./, (s) => s.toUpperCase());
 }
 
@@ -190,18 +170,18 @@ function generateAllFieldsJSX(
 
   for (const field of fields) {
     const config = fieldConfigs.get(field.name);
-    if (config) {
-      const jsx = generateFieldJSX(field, config);
-      // Indent each line by 6 spaces for proper form structure
-      const indented = jsx
-        .split("\n")
-        .map((line) => `      ${line}`)
-        .join("\n");
-      fieldJSXs.push(indented);
+    if (!config) {
+      throw new Error(
+        `Field "${field.name}" has no ComponentConfig. This indicates a bug in the generator pipeline.`,
+      );
     }
+    const jsx = generateFieldJSX(field, config);
+    const indented = jsx
+      .split("\n")
+      .map((line) => `      ${line}`)
+      .join("\n");
+    fieldJSXs.push(indented);
   }
 
   return fieldJSXs.join("\n\n");
 }
-
-export { inferTypeName };

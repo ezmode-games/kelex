@@ -4,6 +4,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { pathToFileURL } from "node:url";
 import { Command } from "commander";
+import type { $ZodType } from "zod/v4/core";
 import { generate } from "./codegen/generator";
 
 const program = new Command();
@@ -43,81 +44,78 @@ async function runGenerate(
   schemaPath: string,
   options: GenerateCommandOptions,
 ): Promise<void> {
-  // Resolve schema path
   const absoluteSchemaPath = path.resolve(schemaPath);
 
-  // Check if file exists
   if (!fs.existsSync(absoluteSchemaPath)) {
     throw new Error(`Schema file not found: ${absoluteSchemaPath}`);
   }
 
-  // Dynamically import the schema file
   const schemaUrl = pathToFileURL(absoluteSchemaPath).href;
-  const schemaModule = await import(schemaUrl);
 
-  // Get the schema export
-  const schemaExportName = options.schema;
-  const schema = schemaModule[schemaExportName] ?? schemaModule.default;
-
-  if (!schema) {
+  let schemaModule: Record<string, unknown>;
+  try {
+    schemaModule = await import(schemaUrl);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     throw new Error(
-      `Schema "${schemaExportName}" not exported from ${schemaPath}`,
+      `Failed to load schema file "${absoluteSchemaPath}": ${message}`,
     );
   }
 
-  // Validate it's a Zod schema
-  if (!schema._zod) {
+  const schemaExportName = options.schema;
+  let schema: unknown = schemaModule[schemaExportName];
+  if (!schema && schemaExportName === "schema") {
+    schema = schemaModule.default;
+  }
+
+  if (!schema) {
+    const available = Object.keys(schemaModule)
+      .filter((k) => k !== "__esModule")
+      .join(", ");
+    throw new Error(
+      `Export "${schemaExportName}" not found in ${schemaPath}. Available exports: ${available}`,
+    );
+  }
+
+  if (typeof schema !== "object" || !("_zod" in schema)) {
     throw new Error(
       `Export "${schemaExportName}" is not a Zod schema. Ensure you are using zod >= 4.0.0`,
     );
   }
 
-  // Determine output path
   const outputPath = options.output ?? deriveOutputPath(schemaPath);
   const absoluteOutputPath = path.resolve(outputPath);
-
-  // Determine form name
   const formName = options.name ?? deriveFormName(schemaExportName);
-
-  // Calculate relative import path from output to schema
   const schemaImportPath = calculateImportPath(
     absoluteOutputPath,
     absoluteSchemaPath,
   );
 
-  // Generate the form
   const result = generate({
-    schema,
+    schema: schema as $ZodType,
     formName,
     schemaImportPath,
     schemaExportName,
     uiImportPath: options.ui,
   });
 
-  // Write output file
   const outputDir = path.dirname(absoluteOutputPath);
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
   fs.writeFileSync(absoluteOutputPath, result.code, "utf-8");
 
-  // Print success message
-  console.log(`✓ Generated ${absoluteOutputPath}`);
+  console.log(`Generated ${absoluteOutputPath}`);
   console.log(`  ${result.fields.length} fields: ${result.fields.join(", ")}`);
 
-  // Print warnings if any
   if (result.warnings.length > 0) {
     console.log("\nWarnings:");
     for (const warning of result.warnings) {
-      console.log(`  ⚠ ${warning}`);
+      console.log(`  ${warning}`);
     }
   }
 }
 
-/**
- * Derives output path from schema path.
- * ./user-schema.ts -> ./user-form.tsx
- */
 function deriveOutputPath(schemaPath: string): string {
   const dir = path.dirname(schemaPath);
   const base = path.basename(schemaPath, path.extname(schemaPath));
@@ -129,10 +127,6 @@ function deriveOutputPath(schemaPath: string): string {
   return path.join(dir, `${finalBase}-form.tsx`);
 }
 
-/**
- * Derives form name from schema export name.
- * userSchema -> UserForm
- */
 function deriveFormName(schemaExportName: string): string {
   const base = schemaExportName
     .replace(/Schema$/i, "")
@@ -142,20 +136,12 @@ function deriveFormName(schemaExportName: string): string {
   return `${finalBase}Form`;
 }
 
-/**
- * Calculates relative import path from output file to schema file.
- */
 function calculateImportPath(outputPath: string, schemaPath: string): string {
   const outputDir = path.dirname(outputPath);
   let relativePath = path.relative(outputDir, schemaPath);
-
-  // Remove .ts/.tsx extension
   relativePath = relativePath.replace(/\.(ts|tsx)$/, "");
-
-  // Ensure it starts with ./
   if (!relativePath.startsWith(".") && !relativePath.startsWith("/")) {
     relativePath = `./${relativePath}`;
   }
-
   return relativePath;
 }

@@ -107,6 +107,41 @@ describe("introspect", () => {
     });
   });
 
+  describe("nullable handling", () => {
+    it("marks nullable fields as nullable", () => {
+      const schema = z.object({ field: z.string().nullable() });
+      const result = introspect(schema, defaultOptions);
+
+      expect(result.fields[0].isNullable).toBe(true);
+      expect(result.fields[0].isOptional).toBe(false);
+      expect(result.fields[0].type).toBe("string");
+    });
+
+    it("handles nullish (optional + nullable)", () => {
+      const schema = z.object({ field: z.string().nullish() });
+      const result = introspect(schema, defaultOptions);
+
+      expect(result.fields[0].isNullable).toBe(true);
+      expect(result.fields[0].isOptional).toBe(true);
+      expect(result.fields[0].type).toBe("string");
+    });
+
+    it("handles nullable optional", () => {
+      const schema = z.object({ field: z.string().nullable().optional() });
+      const result = introspect(schema, defaultOptions);
+
+      expect(result.fields[0].isNullable).toBe(true);
+      expect(result.fields[0].isOptional).toBe(true);
+    });
+
+    it("marks non-nullable fields as not nullable", () => {
+      const schema = z.object({ field: z.string() });
+      const result = introspect(schema, defaultOptions);
+
+      expect(result.fields[0].isNullable).toBe(false);
+    });
+  });
+
   describe("constraint extraction", () => {
     it("extracts string constraints", () => {
       const schema = z.object({
@@ -251,6 +286,7 @@ describe("introspect", () => {
         label: "First Name",
         type: "string",
         isOptional: false,
+        isNullable: false,
         constraints: { minLength: 1 },
         metadata: { kind: "string" },
       });

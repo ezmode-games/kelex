@@ -307,13 +307,12 @@ describe("generate", () => {
       ).toThrow("z.object()");
     });
 
-    it("adds warnings when resolveField throws", () => {
+    it("throws when resolveField fails instead of silently dropping fields", () => {
       const schema = z.object({
         name: z.string(),
         broken: z.string(),
       });
 
-      // Mock resolveField to throw for "broken" field
       const originalResolveField = mapping.resolveField;
       vi.spyOn(mapping, "resolveField").mockImplementation((field) => {
         if (field.name === "broken") {
@@ -322,21 +321,16 @@ describe("generate", () => {
         return originalResolveField(field);
       });
 
-      const result = generate({
-        schema,
-        formName: "TestForm",
-        schemaImportPath: "./schema",
-        schemaExportName: "testSchema",
-      });
+      expect(() =>
+        generate({
+          schema,
+          formName: "TestForm",
+          schemaImportPath: "./schema",
+          schemaExportName: "testSchema",
+        }),
+      ).toThrow("Unsupported field type");
 
-      // Restore mock
       vi.restoreAllMocks();
-
-      // Should have processed name but not broken
-      expect(result.fields).toEqual(["name"]);
-      expect(result.warnings).toHaveLength(1);
-      expect(result.warnings[0]).toContain("broken");
-      expect(result.warnings[0]).toContain("Unsupported field type");
     });
   });
 

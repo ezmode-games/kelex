@@ -14,6 +14,7 @@ function createField(
     label: "Test Field",
     type: "string",
     isOptional: false,
+    isNullable: false,
     constraints: {},
     metadata: { kind: "string" },
     ...overrides,
@@ -202,7 +203,13 @@ describe("generateFormFile", () => {
         fields: [createField({ name: "role" })],
       });
       const fieldConfigs = new Map<string, ComponentConfig>([
-        ["role", createConfig({ component: "RadioGroup" })],
+        [
+          "role",
+          createConfig({
+            component: "RadioGroup",
+            componentProps: { options: ["admin", "user"] },
+          }),
+        ],
       ]);
 
       const output = generateFormFile({
@@ -405,7 +412,13 @@ describe("generateFormFile", () => {
         ],
       });
       const fieldConfigs = new Map<string, ComponentConfig>([
-        ["role", createConfig({ component: "Select" })],
+        [
+          "role",
+          createConfig({
+            component: "Select",
+            componentProps: { options: ["admin", "user", "guest"] },
+          }),
+        ],
       ]);
 
       const output = generateFormFile({
@@ -491,7 +504,7 @@ describe("generateFormFile", () => {
       expect(output).toContain('label="Email"');
     });
 
-    it("skips fields without config", () => {
+    it("throws when field has no config instead of silently skipping", () => {
       const form = createForm({
         fields: [
           createField({ name: "name" }),
@@ -500,17 +513,15 @@ describe("generateFormFile", () => {
       });
       const fieldConfigs = new Map<string, ComponentConfig>([
         ["name", createConfig()],
-        // 'unknown' has no config
       ]);
 
-      const output = generateFormFile({
-        form,
-        fieldConfigs,
-        uiImportPath: "@/components/ui",
-      });
-
-      expect(output).toContain('name="name"');
-      expect(output).not.toContain('name="unknown"');
+      expect(() =>
+        generateFormFile({
+          form,
+          fieldConfigs,
+          uiImportPath: "@/components/ui",
+        }),
+      ).toThrow('Field "unknown" has no ComponentConfig');
     });
   });
 
