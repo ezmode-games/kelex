@@ -312,7 +312,7 @@ describe("generate", () => {
       ).toThrow("z.object()");
     });
 
-    it("throws when resolveField fails instead of silently dropping fields", () => {
+    it("adds warning and skips field when resolveField fails", () => {
       const schema = z.object({
         name: z.string(),
         broken: z.string(),
@@ -326,14 +326,20 @@ describe("generate", () => {
         return originalResolveField(field);
       });
 
-      expect(() =>
-        generate({
-          schema,
-          formName: "TestForm",
-          schemaImportPath: "./schema",
-          schemaExportName: "testSchema",
-        }),
-      ).toThrow("Unsupported field type");
+      const result = generate({
+        schema,
+        formName: "TestForm",
+        schemaImportPath: "./schema",
+        schemaExportName: "testSchema",
+      });
+
+      expect(result.fields).toContain("name");
+      expect(result.fields).not.toContain("broken");
+      expect(result.warnings).toEqual(
+        expect.arrayContaining([
+          expect.stringContaining("Unsupported field type"),
+        ]),
+      );
 
       vi.restoreAllMocks();
     });

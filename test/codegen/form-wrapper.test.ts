@@ -505,7 +505,7 @@ describe("generateFormFile", () => {
       expect(output).toContain('label="Email"');
     });
 
-    it("throws when field has no config instead of silently skipping", () => {
+    it("skips fields with no config", () => {
       const form = createForm({
         fields: [
           createField({ name: "name" }),
@@ -516,13 +516,14 @@ describe("generateFormFile", () => {
         ["name", createConfig()],
       ]);
 
-      expect(() =>
-        generateFormFile({
-          form,
-          fieldConfigs,
-          uiImportPath: "@/components/ui",
-        }),
-      ).toThrow('Field "unknown" has no ComponentConfig');
+      const output = generateFormFile({
+        form,
+        fieldConfigs,
+        uiImportPath: "@/components/ui",
+      });
+
+      expect(output).toContain('name="name"');
+      expect(output).not.toContain('name="unknown"');
     });
   });
 
