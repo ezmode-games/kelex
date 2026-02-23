@@ -329,24 +329,24 @@ describe("introspect", () => {
       );
     });
 
-    it("throws for unsupported field type (array)", () => {
+    it("handles array field type", () => {
       const schema = z.object({
         items: z.array(z.string()),
       });
 
-      expect(() => introspect(schema, defaultOptions)).toThrow(
-        'Unsupported field type "array" for field "items"',
-      );
+      const result = introspect(schema, defaultOptions);
+      expect(result.fields[0].type).toBe("array");
+      expect(result.fields[0].metadata.kind).toBe("array");
     });
 
-    it("throws for unsupported field type (nested object)", () => {
+    it("handles nested object field type", () => {
       const schema = z.object({
         address: z.object({ street: z.string() }),
       });
 
-      expect(() => introspect(schema, defaultOptions)).toThrow(
-        'Unsupported field type "object" for field "address"',
-      );
+      const result = introspect(schema, defaultOptions);
+      expect(result.fields[0].type).toBe("object");
+      expect(result.fields[0].metadata.kind).toBe("object");
     });
   });
 });

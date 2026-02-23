@@ -41,6 +41,7 @@ function createForm(overrides: Partial<FormDescriptor> = {}): FormDescriptor {
     fields: [],
     schemaImportPath: "./schema",
     schemaExportName: "testSchema",
+    warnings: [],
     ...overrides,
   };
 }
@@ -127,7 +128,7 @@ describe("generateFormFile", () => {
         uiImportPath: "@/components/ui",
       });
 
-      expect(output).toContain('<button type="submit">Submit</button>');
+      expect(output).toContain('<Button type="submit">Submit</Button>');
     });
   });
 
@@ -504,7 +505,7 @@ describe("generateFormFile", () => {
       expect(output).toContain('label="Email"');
     });
 
-    it("throws when field has no config instead of silently skipping", () => {
+    it("skips fields with no config", () => {
       const form = createForm({
         fields: [
           createField({ name: "name" }),
@@ -515,13 +516,14 @@ describe("generateFormFile", () => {
         ["name", createConfig()],
       ]);
 
-      expect(() =>
-        generateFormFile({
-          form,
-          fieldConfigs,
-          uiImportPath: "@/components/ui",
-        }),
-      ).toThrow('Field "unknown" has no ComponentConfig');
+      const output = generateFormFile({
+        form,
+        fieldConfigs,
+        uiImportPath: "@/components/ui",
+      });
+
+      expect(output).toContain('name="name"');
+      expect(output).not.toContain('name="unknown"');
     });
   });
 
@@ -594,7 +596,7 @@ describe("generateFormFile", () => {
       expect(output).toContain('email: "",');
       expect(output).toContain('role: "admin",');
       expect(output).toContain("active: false,");
-      expect(output).toContain('<button type="submit">Submit</button>');
+      expect(output).toContain('<Button type="submit">Submit</Button>');
     });
   });
 });

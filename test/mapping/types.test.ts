@@ -17,8 +17,11 @@ describe("Mapping Types", () => {
         "RadioGroup",
         "Slider",
         "DatePicker",
+        "Fieldset",
+        "FieldArray",
+        "UnionSwitch",
       ];
-      expect(types).toHaveLength(7);
+      expect(types).toHaveLength(10);
     });
   });
 
@@ -139,6 +142,7 @@ describe("Mapping Types", () => {
         label: "Is Active",
         type: "boolean",
         isOptional: false,
+        isNullable: false,
         constraints: {},
         metadata: { kind: "boolean" },
       };
@@ -159,6 +163,7 @@ describe("Mapping Types", () => {
         label: "Role",
         type: "enum",
         isOptional: false,
+        isNullable: false,
         constraints: {},
         metadata: { kind: "enum", values: ["admin", "user"] as const },
       };

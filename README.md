@@ -1,6 +1,6 @@
 # phantom-zone
 
-Generate type-safe React form components from Zod schemas. Built for [TanStack Form](https://tanstack.com/form) and [Rafters](https://rafters.dev)/[shadcn/ui](https://ui.shadcn.com) components.
+Generate type-safe React form components from Zod schemas. Built for [TanStack Form](https://tanstack.com/form) and [Rafters](https://rafters.studio)/[shadcn/ui](https://ui.shadcn.com) components.
 
 ## Quick Start
 
@@ -8,18 +8,24 @@ Generate type-safe React form components from Zod schemas. Built for [TanStack F
 pnpx phantom-zone@latest generate ./src/schemas/user.ts -s userSchema
 ```
 
-This reads your Zod schema and generates a complete React form component with:
+This reads your Zod schema and generates:
 
-- Full TypeScript types inferred from your schema
+- A complete React form component with full TypeScript types
+- A `primitives.tsx` file with built-in UI components (shadcn-compatible API)
 - TanStack Form for state management and validation
-- Appropriate UI components for each field type
 - Client-side validation using your Zod schema
+
+The generated primitives are pure HTML/React components styled with Tailwind that match the shadcn component API. When you're ready to use your own components, pass `--ui` to swap the import path:
+
+```bash
+pnpx phantom-zone@latest generate ./src/schemas/user.ts -s userSchema --ui @/components/ui
+```
 
 ## Requirements
 
 - **Zod 4** - Schema definitions (`zod@^4.0.0`)
 - **TanStack Form** - Form state management
-- **Rafters/shadcn** - UI components copied to your project (typically at `@/components/ui`)
+- **Tailwind CSS** - Styling (used by generated primitives and form layout)
 
 ## Usage
 
@@ -34,12 +40,12 @@ pnpx phantom-zone@latest generate <schema-path> [options]
 | `-o, --output <path>` | Output file path | Derived from schema path |
 | `-n, --name <name>` | Form component name | Derived from schema name |
 | `-s, --schema <name>` | Exported schema name | `schema` |
-| `--ui <path>` | UI components import path | `@/components/ui` |
+| `--ui <path>` | UI component import path | Generates built-in primitives |
 
 ### Examples
 
 ```bash
-# Basic - generates user-form.tsx next to schema
+# Basic - generates user-form.tsx + primitives.tsx
 pnpx phantom-zone@latest generate ./src/schemas/user-schema.ts -s userSchema
 
 # Custom output path and component name
@@ -48,13 +54,15 @@ pnpx phantom-zone@latest generate ./src/schemas/user.ts \
   -n ProfileForm \
   -s userProfileSchema
 
-# Custom UI import path
+# Use your own shadcn components (no primitives generated)
 pnpx phantom-zone@latest generate ./src/schemas/user.ts \
   -s userSchema \
-  --ui @/ui
+  --ui @/components/ui
 ```
 
 ## Supported Types
+
+### Scalar Types
 
 | Zod Type | Component | Notes |
 |----------|-----------|-------|
@@ -68,14 +76,35 @@ pnpx phantom-zone@latest generate ./src/schemas/user.ts \
 | `z.enum([...])` | RadioGroup | When `<= 4` options |
 | `z.enum([...])` | Select | When `> 4` options |
 | `z.date()` | DatePicker | |
-| `z.optional(...)` | Any | Marks field as not required |
+
+### Composite Types
+
+| Zod Type | Rendering | Notes |
+|----------|-----------|-------|
+| `z.object({...})` | Card with nested fields | Recursive |
+| `z.array(z.string())` | Dynamic list with add/remove | Simple arrays |
+| `z.array(z.object({...}))` | Card per item with nested fields | Array of objects |
+| `z.discriminatedUnion(...)` | Select discriminator + conditional fields | |
+| `z.tuple([...])` | Card with indexed fields | |
+| `z.record(z.string(), ...)` | Key-value pair list | |
+| `z.intersection(a, b)` / `.and()` | Merged into single object | Top-level only |
+
+### Modifiers
+
+| Modifier | Effect |
+|----------|--------|
+| `z.optional(...)` | Marks field as not required |
+| `z.nullable(...)` | Sets `isNullable` on field descriptor |
+| `z.nullish(...)` | Optional + nullable |
+| `.brand(...)` | Transparent (no effect on form) |
+| `.check()` / `.superRefine()` | Validation preserved, no layout effect |
+| `z.pipe()` / `.transform()` | Uses input type for form field |
 
 ## Example
 
 **Input schema:**
 
 ```typescript
-// user-schema.ts
 import { z } from "zod/v4";
 
 export const userSchema = z.object({
@@ -84,49 +113,18 @@ export const userSchema = z.object({
   age: z.number().min(0).max(150).optional(),
   role: z.enum(["admin", "user", "guest"]),
   newsletter: z.boolean(),
+  address: z.object({
+    street: z.string(),
+    city: z.string(),
+    zip: z.string(),
+  }),
+  tags: z.array(z.string()),
 });
-
-export type User = z.infer<typeof userSchema>;
 ```
 
-**Generated form:**
+**Generated output:** `user-form.tsx` + `primitives.tsx`
 
-```tsx
-'use client';
-
-import { useForm } from '@tanstack/react-form';
-import { Checkbox, Field, Input, Label, RadioGroup } from '@/components/ui';
-import { userSchema, type User } from './user-schema';
-
-interface UserFormProps {
-  defaultValues?: Partial<User>;
-  onSubmit: (data: User) => void | Promise<void>;
-}
-
-export function UserForm({ defaultValues: initialValues, onSubmit }: UserFormProps) {
-  const form = useForm({
-    defaultValues: initialValues ?? {
-      name: "",
-      email: "",
-      age: 0,
-      role: "admin",
-      newsletter: false,
-    },
-    validators: {
-      onSubmit: userSchema,
-    },
-    onSubmit: async ({ value }) => {
-      await onSubmit(value);
-    },
-  });
-
-  return (
-    <form onSubmit={(e) => { e.preventDefault(); form.handleSubmit(); }}>
-      {/* Generated fields... */}
-    </form>
-  );
-}
-```
+The form handles nested objects (Card-based grouping), arrays (dynamic add/remove), and all scalar types out of the box.
 
 ## Programmatic API
 
@@ -139,12 +137,27 @@ const result = generate({
   formName: "UserForm",
   schemaImportPath: "./schema",
   schemaExportName: "userSchema",
+  // omit uiImportPath to get built-in primitives
+});
+
+result.code;       // Generated form component TSX
+result.primitives; // Built-in UI components TSX (undefined when uiImportPath is set)
+result.fields;     // ["name", "email", "age", ...]
+result.warnings;   // Any issues encountered
+```
+
+Pass `uiImportPath` to use your own components and skip primitives generation:
+
+```typescript
+const result = generate({
+  schema: userSchema,
+  formName: "UserForm",
+  schemaImportPath: "./schema",
+  schemaExportName: "userSchema",
   uiImportPath: "@/components/ui",
 });
 
-console.log(result.code);     // Generated TSX
-console.log(result.fields);   // ["name", "email", "age", ...]
-console.log(result.warnings); // Any issues encountered
+result.primitives; // undefined
 ```
 
 ## Documentation

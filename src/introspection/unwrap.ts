@@ -11,25 +11,39 @@ export interface UnwrapResult {
 
 /** Type guard to check if schema has unwrap method */
 function hasUnwrap(
-  schema: $ZodType,
+  schema: unknown,
 ): schema is { unwrap: () => $ZodType } & $ZodType {
   return (
-    typeof (schema as unknown as Record<string, unknown>).unwrap === "function"
+    typeof schema === "object" &&
+    schema !== null &&
+    "unwrap" in schema &&
+    typeof (schema as Record<string, unknown>).unwrap === "function"
   );
 }
 
 /** Validates that the schema is a Zod 4 schema with required properties */
 function isValidZod4Schema(schema: unknown): schema is $ZodType {
-  if (!schema || typeof schema !== "object") return false;
-  const zod = (schema as Record<string, unknown>)._zod;
-  if (!zod || typeof zod !== "object") return false;
-  const def = (zod as Record<string, unknown>).def;
-  return !!def && typeof def === "object" && "type" in def;
+  if (!schema || typeof schema !== "object") {
+    return false;
+  }
+
+  const s = schema as Record<string, unknown>;
+  if (!("_zod" in s) || !s._zod || typeof s._zod !== "object") {
+    return false;
+  }
+
+  const zod = s._zod as Record<string, unknown>;
+  if (!("def" in zod) || !zod.def || typeof zod.def !== "object") {
+    return false;
+  }
+
+  const def = zod.def as Record<string, unknown>;
+  return "type" in def;
 }
 
 /**
- * Unwraps optional wrapper from a Zod schema.
- * Handles: z.optional(), z.string().optional()
+ * Unwraps optional and nullable wrappers from a Zod schema.
+ * Handles: z.optional(), z.nullable(), z.nullish() (optional + nullable)
  */
 export function unwrapSchema(schema: $ZodType): UnwrapResult {
   if (!isValidZod4Schema(schema)) {
@@ -40,6 +54,7 @@ export function unwrapSchema(schema: $ZodType): UnwrapResult {
   let isOptional = false;
   let isNullable = false;
 
+  // Unwrap nested optional/nullable wrappers
   while (
     current._zod.def.type === "optional" ||
     current._zod.def.type === "nullable"
@@ -49,11 +64,16 @@ export function unwrapSchema(schema: $ZodType): UnwrapResult {
     } else {
       isNullable = true;
     }
+
     if (!hasUnwrap(current)) {
       throw new Error(`${current._zod.def.type} schema missing unwrap method`);
     }
     current = current.unwrap();
   }
 
-  return { inner: current, isOptional, isNullable };
+  return {
+    inner: current,
+    isOptional,
+    isNullable,
+  };
 }

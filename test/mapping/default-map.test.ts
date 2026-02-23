@@ -41,13 +41,18 @@ function createField(
 }
 
 describe("defaultMappingRules", () => {
-  it("has 10 rules", () => {
-    expect(defaultMappingRules).toHaveLength(10);
+  it("has 15 rules", () => {
+    expect(defaultMappingRules).toHaveLength(15);
   });
 
   it("has rules in correct order", () => {
     const names = defaultMappingRules.map((r) => r.name);
     expect(names).toEqual([
+      "object-fieldset",
+      "array-field-array",
+      "union-switch",
+      "tuple-fieldset",
+      "record-field-array",
       "boolean-checkbox",
       "enum-radio-group",
       "enum-select",
@@ -62,7 +67,7 @@ describe("defaultMappingRules", () => {
   });
 
   describe("boolean-checkbox", () => {
-    const rule = defaultMappingRules[0];
+    const rule = defaultMappingRules[5];
 
     it("matches boolean type", () => {
       const field = createField({ type: "boolean" });
@@ -85,7 +90,7 @@ describe("defaultMappingRules", () => {
   });
 
   describe("enum-radio-group", () => {
-    const rule = defaultMappingRules[1];
+    const rule = defaultMappingRules[6];
 
     it("matches enum with 4 or fewer values", () => {
       const field = createField({
@@ -128,7 +133,7 @@ describe("defaultMappingRules", () => {
   });
 
   describe("enum-select", () => {
-    const rule = defaultMappingRules[2];
+    const rule = defaultMappingRules[7];
 
     it("matches any enum type", () => {
       const field = createField({
@@ -157,7 +162,7 @@ describe("defaultMappingRules", () => {
   });
 
   describe("date-picker", () => {
-    const rule = defaultMappingRules[3];
+    const rule = defaultMappingRules[8];
 
     it("matches date type", () => {
       const field = createField({ type: "date" });
@@ -175,7 +180,7 @@ describe("defaultMappingRules", () => {
   });
 
   describe("number-slider", () => {
-    const rule = defaultMappingRules[4];
+    const rule = defaultMappingRules[9];
 
     it("matches number with bounded range <= 100", () => {
       const field = createField({
@@ -247,7 +252,7 @@ describe("defaultMappingRules", () => {
   });
 
   describe("number-input", () => {
-    const rule = defaultMappingRules[5];
+    const rule = defaultMappingRules[10];
 
     it("matches any number type", () => {
       const field = createField({ type: "number" });
@@ -283,7 +288,7 @@ describe("defaultMappingRules", () => {
   });
 
   describe("string-email", () => {
-    const rule = defaultMappingRules[6];
+    const rule = defaultMappingRules[11];
 
     it("matches string with email format", () => {
       const field = createField({
@@ -320,7 +325,7 @@ describe("defaultMappingRules", () => {
   });
 
   describe("string-url", () => {
-    const rule = defaultMappingRules[7];
+    const rule = defaultMappingRules[12];
 
     it("matches string with url format", () => {
       const field = createField({
@@ -349,7 +354,7 @@ describe("defaultMappingRules", () => {
   });
 
   describe("string-textarea", () => {
-    const rule = defaultMappingRules[8];
+    const rule = defaultMappingRules[13];
 
     it("matches string with maxLength > 100", () => {
       const field = createField({
@@ -386,7 +391,7 @@ describe("defaultMappingRules", () => {
   });
 
   describe("string-default", () => {
-    const rule = defaultMappingRules[9];
+    const rule = defaultMappingRules[14];
 
     it("matches any string type", () => {
       const field = createField({ type: "string" });
