@@ -40,3 +40,12 @@ export {
   findMatchingRule,
   resolveField,
 } from "./mapping";
+
+// Schema writer types
+export type {
+  SchemaWriterOptions,
+  SchemaWriterResult,
+} from "./schema-writer";
+
+// Schema writer functions
+export { emitField, writeSchema } from "./schema-writer";
