@@ -1,6 +1,6 @@
 # Task Completion Checklist
 
-When completing a task in phantom-zone, follow this checklist:
+When completing a task in kelex, follow this checklist:
 
 ## Before Committing
 

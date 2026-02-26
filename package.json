@@ -1,14 +1,14 @@
 {
-  "name": "phantom-zone",
+  "name": "kelex",
   "version": "0.0.1",
   "description": "Generate React form components from Zod schemas",
   "type": "module",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ezmode-games/phantom-zone.git"
+    "url": "https://github.com/ezmode-games/kelex.git"
   },
-  "homepage": "https://ezmode.games/oss/phantom-zone",
+  "homepage": "https://ezmode.games/oss/kelex",
   "keywords": [
     "zod",
     "react",
@@ -22,7 +22,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "phantom-zone": "./dist/cli.js"
+    "kelex": "./dist/cli.js"
   },
   "exports": {
     ".": {

@@ -9,7 +9,7 @@ import { generate } from "./codegen/generator";
 const program = new Command();
 
 program
-  .name("phantom-zone")
+  .name("kelex")
   .description("Generate React forms from Zod schemas")
   .version("0.0.1");
 
