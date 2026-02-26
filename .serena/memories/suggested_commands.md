@@ -68,7 +68,7 @@ pnpm flightcheck
 node dist/cli.js generate ./path/to/schema.ts -s schemaName
 
 # Or via pnpx
-pnpx phantom-zone generate ./path/to/schema.ts -s schemaName
+pnpx kelex generate ./path/to/schema.ts -s schemaName
 ```
 
 ## Releases

@@ -317,7 +317,7 @@ describe("introspect", () => {
       const schema = z.string();
 
       expect(() => introspect(schema, defaultOptions)).toThrow(
-        "phantom-zone only supports z.object() schemas at the top level",
+        "kelex only supports z.object() schemas at the top level",
       );
     });
 
@@ -325,7 +325,7 @@ describe("introspect", () => {
       const schema = z.array(z.string());
 
       expect(() => introspect(schema, defaultOptions)).toThrow(
-        "phantom-zone only supports z.object() schemas at the top level",
+        "kelex only supports z.object() schemas at the top level",
       );
     });
 

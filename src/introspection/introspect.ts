@@ -371,7 +371,7 @@ export function introspect(
 
   if (def.type !== "object") {
     throw new Error(
-      `phantom-zone only supports z.object() schemas at the top level, got "${def.type}"`,
+      `kelex only supports z.object() schemas at the top level, got "${def.type}"`,
     );
   }
 

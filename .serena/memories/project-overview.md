@@ -1,8 +1,8 @@
-# Phantom Zone - Project Overview
+# Kelex - Project Overview
 
 ## Purpose
 
-Phantom Zone is a CLI tool and library that generates type-safe React form components from Zod schemas. It reads a Zod schema and outputs a complete React form with:
+Kelex is a CLI tool and library that generates type-safe React form components from Zod schemas. It reads a Zod schema and outputs a complete React form with:
 - Full TypeScript types inferred from the schema
 - TanStack Form for state management and validation
 - Appropriate UI components (Rafters/shadcn) for each field type
@@ -27,9 +27,9 @@ Phantom Zone is a CLI tool and library that generates type-safe React form compo
 
 ## Repository
 
-- GitHub: https://github.com/ezmode-games/phantom-zone
+- GitHub: https://github.com/ezmode-games/kelex
 - License: MIT
-- Homepage: https://ezmode.games/oss/phantom-zone
+- Homepage: https://ezmode.games/oss/kelex
 
 ## Codebase Structure
 

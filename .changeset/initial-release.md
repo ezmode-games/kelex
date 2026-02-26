@@ -1,8 +1,8 @@
 ---
-"phantom-zone": minor
+"kelex": minor
 ---
 
-Initial release of phantom-zone - generate React form components from Zod schemas.
+Initial release of kelex - generate React form components from Zod schemas.
 
 Features:
 - CLI tool for generating forms from Zod schema files
