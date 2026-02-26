@@ -7,17 +7,18 @@ const SUPPORTED_TYPES = new Set([
   "date",
   "enum",
   "array",
+  "object",
 ]);
 
 /**
  * Emits a Zod v4 expression string for a single FieldDescriptor.
- * Throws on unsupported types (object, union, tuple, record).
+ * Throws on unsupported types (union, tuple, record).
  */
 export function emitField(field: FieldDescriptor): string {
   if (!SUPPORTED_TYPES.has(field.type)) {
     throw new Error(
       `Unsupported field type "${field.type}" for field "${field.name}". ` +
-        "Only string, number, boolean, date, enum, and array are supported.",
+        "Only string, number, boolean, date, enum, array, and object are supported.",
     );
   }
 
@@ -52,6 +53,8 @@ function emitBaseExpression(field: FieldDescriptor): string {
       return emitEnum(field);
     case "array":
       return emitArray(field);
+    case "object":
+      return emitObject(field);
     default:
       throw new Error(`Unexpected field type: ${field.type}`);
   }
@@ -149,4 +152,17 @@ function emitArray(field: FieldDescriptor): string {
   }
 
   return base;
+}
+
+function emitObject(field: FieldDescriptor): string {
+  if (field.metadata.kind !== "object") {
+    throw new Error(
+      `Field "${field.name}" has type "object" but metadata kind is "${field.metadata.kind}"`,
+    );
+  }
+
+  const entries = field.metadata.fields.map(
+    (child) => `${child.name}: ${emitField(child)}`,
+  );
+  return `z.object({ ${entries.join(", ")} })`;
 }

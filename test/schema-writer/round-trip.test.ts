@@ -216,6 +216,84 @@ describe("round-trip: schema -> introspect -> writeSchema -> eval -> introspect"
     expect(descriptor2.fields[0].isOptional).toBe(true);
   });
 
+  it("round-trips a simple nested object", () => {
+    const schema = z.object({
+      address: z.object({
+        street: z.string(),
+        city: z.string(),
+      }),
+    });
+    const { descriptor1, descriptor2 } = roundTrip(schema);
+
+    const f1 = descriptor1.fields[0];
+    const f2 = descriptor2.fields[0];
+    expect(f2.type).toBe("object");
+    expect(f2.name).toBe("address");
+    if (f1.metadata.kind === "object" && f2.metadata.kind === "object") {
+      expect(f2.metadata.fields).toHaveLength(f1.metadata.fields.length);
+      expect(f2.metadata.fields[0].name).toBe("street");
+      expect(f2.metadata.fields[0].type).toBe("string");
+      expect(f2.metadata.fields[1].name).toBe("city");
+      expect(f2.metadata.fields[1].type).toBe("string");
+    }
+  });
+
+  it("round-trips deeply nested objects", () => {
+    const schema = z.object({
+      company: z.object({
+        hq: z.object({
+          city: z.string(),
+          zip: z.string().min(5).max(10),
+        }),
+      }),
+    });
+    const { descriptor1, descriptor2 } = roundTrip(schema);
+
+    const f2 = descriptor2.fields[0];
+    expect(f2.type).toBe("object");
+    if (f2.metadata.kind === "object") {
+      const hq = f2.metadata.fields[0];
+      expect(hq.type).toBe("object");
+      if (hq.metadata.kind === "object") {
+        expect(hq.metadata.fields[0].name).toBe("city");
+        expect(hq.metadata.fields[1].name).toBe("zip");
+        expect(hq.metadata.fields[1].constraints.minLength).toBe(5);
+        expect(hq.metadata.fields[1].constraints.maxLength).toBe(10);
+      }
+    }
+
+    // Verify structural match against original
+    expect(descriptor2.fields).toHaveLength(descriptor1.fields.length);
+  });
+
+  it("round-trips an array of objects", () => {
+    const schema = z.object({
+      items: z.array(
+        z.object({
+          id: z.number().int(),
+          label: z.string(),
+        }),
+      ),
+    });
+    const { descriptor1, descriptor2 } = roundTrip(schema);
+
+    const f2 = descriptor2.fields[0];
+    expect(f2.type).toBe("array");
+    if (f2.metadata.kind === "array") {
+      expect(f2.metadata.element.type).toBe("object");
+      if (f2.metadata.element.metadata.kind === "object") {
+        const fields = f2.metadata.element.metadata.fields;
+        expect(fields).toHaveLength(2);
+        expect(fields[0].name).toBe("id");
+        expect(fields[0].constraints.isInt).toBe(true);
+        expect(fields[1].name).toBe("label");
+        expect(fields[1].type).toBe("string");
+      }
+    }
+
+    expect(descriptor2.fields).toHaveLength(descriptor1.fields.length);
+  });
+
   it("round-trips a complex multi-field schema", () => {
     const schema = z.object({
       name: z.string().min(1),

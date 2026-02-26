@@ -277,15 +277,154 @@ describe("emitField", () => {
     });
   });
 
-  describe("unsupported types", () => {
-    it("throws on object type", () => {
+  describe("object fields", () => {
+    it("emits z.object() with child fields", () => {
       const field = makeField({
         type: "object",
-        metadata: { kind: "object", fields: [] },
+        metadata: {
+          kind: "object",
+          fields: [
+            makeField({
+              name: "street",
+              type: "string",
+              metadata: { kind: "string" },
+            }),
+            makeField({
+              name: "city",
+              type: "string",
+              metadata: { kind: "string" },
+            }),
+          ],
+        },
       });
-      expect(() => emitField(field)).toThrow('Unsupported field type "object"');
+      expect(emitField(field)).toBe(
+        "z.object({ street: z.string(), city: z.string() })",
+      );
     });
 
+    it("emits z.object() with constrained children", () => {
+      const field = makeField({
+        type: "object",
+        metadata: {
+          kind: "object",
+          fields: [
+            makeField({
+              name: "name",
+              type: "string",
+              constraints: { minLength: 1, maxLength: 50 },
+              metadata: { kind: "string" },
+            }),
+            makeField({
+              name: "age",
+              type: "number",
+              constraints: { min: 0, max: 150 },
+              metadata: { kind: "number" },
+            }),
+          ],
+        },
+      });
+      expect(emitField(field)).toBe(
+        "z.object({ name: z.string().min(1).max(50), age: z.number().min(0).max(150) })",
+      );
+    });
+
+    it("emits deeply nested objects", () => {
+      const field = makeField({
+        type: "object",
+        metadata: {
+          kind: "object",
+          fields: [
+            makeField({
+              name: "inner",
+              type: "object",
+              metadata: {
+                kind: "object",
+                fields: [
+                  makeField({
+                    name: "value",
+                    type: "string",
+                    metadata: { kind: "string" },
+                  }),
+                ],
+              },
+            }),
+          ],
+        },
+      });
+      expect(emitField(field)).toBe(
+        "z.object({ inner: z.object({ value: z.string() }) })",
+      );
+    });
+
+    it("wraps with .optional() on optional nested object", () => {
+      const field = makeField({
+        type: "object",
+        isOptional: true,
+        metadata: {
+          kind: "object",
+          fields: [
+            makeField({
+              name: "x",
+              type: "number",
+              metadata: { kind: "number" },
+            }),
+          ],
+        },
+      });
+      expect(emitField(field)).toBe("z.object({ x: z.number() }).optional()");
+    });
+
+    it("wraps with .nullable() on nullable nested object", () => {
+      const field = makeField({
+        type: "object",
+        isNullable: true,
+        metadata: {
+          kind: "object",
+          fields: [
+            makeField({
+              name: "x",
+              type: "number",
+              metadata: { kind: "number" },
+            }),
+          ],
+        },
+      });
+      expect(emitField(field)).toBe("z.object({ x: z.number() }).nullable()");
+    });
+
+    it("emits array of objects", () => {
+      const field = makeField({
+        type: "array",
+        metadata: {
+          kind: "array",
+          element: makeField({
+            name: "item",
+            type: "object",
+            metadata: {
+              kind: "object",
+              fields: [
+                makeField({
+                  name: "id",
+                  type: "number",
+                  metadata: { kind: "number" },
+                }),
+                makeField({
+                  name: "label",
+                  type: "string",
+                  metadata: { kind: "string" },
+                }),
+              ],
+            },
+          }),
+        },
+      });
+      expect(emitField(field)).toBe(
+        "z.array(z.object({ id: z.number(), label: z.string() }))",
+      );
+    });
+  });
+
+  describe("unsupported types", () => {
     it("throws on union type", () => {
       const field = makeField({
         type: "union",
