@@ -129,7 +129,7 @@ describe("writeSchema", () => {
     });
   });
 
-  describe("error handling", () => {
+  describe("nested object fields", () => {
     it("emits nested object fields", () => {
       const form = makeForm({
         fields: [
@@ -159,7 +159,9 @@ describe("writeSchema", () => {
         "address: z.object({ street: z.string(), city: z.string() }),",
       );
     });
+  });
 
+  describe("error handling", () => {
     it("throws on unsupported union type", () => {
       const form = makeForm({
         fields: [
