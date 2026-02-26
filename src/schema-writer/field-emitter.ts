@@ -1,0 +1,152 @@
+import type { FieldDescriptor } from "../introspection";
+
+const SUPPORTED_TYPES = new Set([
+  "string",
+  "number",
+  "boolean",
+  "date",
+  "enum",
+  "array",
+]);
+
+/**
+ * Emits a Zod v4 expression string for a single FieldDescriptor.
+ * Throws on unsupported types (object, union, tuple, record).
+ */
+export function emitField(field: FieldDescriptor): string {
+  if (!SUPPORTED_TYPES.has(field.type)) {
+    throw new Error(
+      `Unsupported field type "${field.type}" for field "${field.name}". ` +
+        "Only string, number, boolean, date, enum, and array are supported.",
+    );
+  }
+
+  let expr = emitBaseExpression(field);
+
+  if (field.isNullable) {
+    expr += ".nullable()";
+  }
+
+  if (field.isOptional) {
+    expr += ".optional()";
+  }
+
+  if (field.description) {
+    expr += `.describe(${JSON.stringify(field.description)})`;
+  }
+
+  return expr;
+}
+
+function emitBaseExpression(field: FieldDescriptor): string {
+  switch (field.type) {
+    case "string":
+      return emitString(field);
+    case "number":
+      return emitNumber(field);
+    case "boolean":
+      return "z.boolean()";
+    case "date":
+      return "z.date()";
+    case "enum":
+      return emitEnum(field);
+    case "array":
+      return emitArray(field);
+    default:
+      throw new Error(`Unexpected field type: ${field.type}`);
+  }
+}
+
+function emitString(field: FieldDescriptor): string {
+  const { constraints } = field;
+
+  // Zod v4 top-level format types
+  let base: string;
+  switch (constraints.format) {
+    case "email":
+      base = "z.email()";
+      break;
+    case "url":
+      base = "z.url()";
+      break;
+    case "uuid":
+      base = "z.uuid()";
+      break;
+    case "cuid":
+      base = "z.cuid()";
+      break;
+    case "datetime":
+      base = "z.iso.datetime()";
+      break;
+    default:
+      base = "z.string()";
+      break;
+  }
+
+  if (constraints.minLength !== undefined) {
+    base += `.min(${constraints.minLength})`;
+  }
+  if (constraints.maxLength !== undefined) {
+    base += `.max(${constraints.maxLength})`;
+  }
+  if (constraints.pattern !== undefined) {
+    base += `.regex(/${constraints.pattern}/)`;
+  }
+
+  return base;
+}
+
+function emitNumber(field: FieldDescriptor): string {
+  const { constraints } = field;
+
+  // Always use z.number() base with .int() chain instead of z.int() top-level.
+  // z.int() stores format in def differently than z.number().int() stores it
+  // in checks, and the introspection extracts isInt from checks only.
+  let base = "z.number()";
+
+  if (constraints.isInt) {
+    base += ".int()";
+  }
+  if (constraints.min !== undefined) {
+    base += `.min(${constraints.min})`;
+  }
+  if (constraints.max !== undefined) {
+    base += `.max(${constraints.max})`;
+  }
+  if (constraints.step !== undefined) {
+    base += `.multipleOf(${constraints.step})`;
+  }
+
+  return base;
+}
+
+function emitEnum(field: FieldDescriptor): string {
+  if (field.metadata.kind !== "enum") {
+    throw new Error(
+      `Field "${field.name}" has type "enum" but metadata kind is "${field.metadata.kind}"`,
+    );
+  }
+
+  const values = field.metadata.values.map((v) => JSON.stringify(v)).join(", ");
+  return `z.enum([${values}])`;
+}
+
+function emitArray(field: FieldDescriptor): string {
+  if (field.metadata.kind !== "array") {
+    throw new Error(
+      `Field "${field.name}" has type "array" but metadata kind is "${field.metadata.kind}"`,
+    );
+  }
+
+  const elementExpr = emitField(field.metadata.element);
+  let base = `z.array(${elementExpr})`;
+
+  if (field.constraints.minItems !== undefined) {
+    base += `.min(${field.constraints.minItems})`;
+  }
+  if (field.constraints.maxItems !== undefined) {
+    base += `.max(${field.constraints.maxItems})`;
+  }
+
+  return base;
+}
