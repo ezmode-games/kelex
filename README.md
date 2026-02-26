@@ -5,7 +5,7 @@ Generate type-safe React form components from Zod schemas. Built for [TanStack F
 ## Quick Start
 
 ```bash
-pnpx kelex@latest generate ./src/schemas/user.ts -s userSchema
+pnpx @ezmode-games/kelex@latest generate ./src/schemas/user.ts -s userSchema
 ```
 
 This reads your Zod schema and generates:
@@ -18,7 +18,7 @@ This reads your Zod schema and generates:
 The generated primitives are pure HTML/React components styled with Tailwind that match the shadcn component API. When you're ready to use your own components, pass `--ui` to swap the import path:
 
 ```bash
-pnpx kelex@latest generate ./src/schemas/user.ts -s userSchema --ui @/components/ui
+pnpx @ezmode-games/kelex@latest generate ./src/schemas/user.ts -s userSchema --ui @/components/ui
 ```
 
 ## Requirements
@@ -30,7 +30,7 @@ pnpx kelex@latest generate ./src/schemas/user.ts -s userSchema --ui @/components
 ## Usage
 
 ```bash
-pnpx kelex@latest generate <schema-path> [options]
+pnpx @ezmode-games/kelex@latest generate <schema-path> [options]
 ```
 
 ### Options
@@ -46,16 +46,16 @@ pnpx kelex@latest generate <schema-path> [options]
 
 ```bash
 # Basic - generates user-form.tsx + primitives.tsx
-pnpx kelex@latest generate ./src/schemas/user-schema.ts -s userSchema
+pnpx @ezmode-games/kelex@latest generate ./src/schemas/user-schema.ts -s userSchema
 
 # Custom output path and component name
-pnpx kelex@latest generate ./src/schemas/user.ts \
+pnpx @ezmode-games/kelex@latest generate ./src/schemas/user.ts \
   -o ./src/components/forms/profile-form.tsx \
   -n ProfileForm \
   -s userProfileSchema
 
 # Use your own shadcn components (no primitives generated)
-pnpx kelex@latest generate ./src/schemas/user.ts \
+pnpx @ezmode-games/kelex@latest generate ./src/schemas/user.ts \
   -s userSchema \
   --ui @/components/ui
 ```
@@ -129,7 +129,7 @@ The form handles nested objects (Card-based grouping), arrays (dynamic add/remov
 ## Programmatic API
 
 ```typescript
-import { generate } from "kelex";
+import { generate } from "@ezmode-games/kelex";
 import { userSchema } from "./schema";
 
 const result = generate({
