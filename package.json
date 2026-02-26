@@ -1,5 +1,5 @@
 {
-  "name": "kelex",
+  "name": "@ezmode-games/kelex",
   "version": "0.0.1",
   "description": "Generate React form components from Zod schemas",
   "type": "module",
