@@ -792,6 +792,52 @@ describe("emitField", () => {
       );
     });
 
+    it("wraps discriminated union with .nullable()", () => {
+      const field = makeField({
+        type: "union",
+        isNullable: true,
+        metadata: {
+          kind: "union",
+          discriminator: "type",
+          variants: [
+            {
+              value: "a",
+              fields: [
+                makeField({
+                  name: "type",
+                  type: "string",
+                  metadata: { kind: "string" },
+                }),
+                makeField({
+                  name: "x",
+                  type: "string",
+                  metadata: { kind: "string" },
+                }),
+              ],
+            },
+            {
+              value: "b",
+              fields: [
+                makeField({
+                  name: "type",
+                  type: "string",
+                  metadata: { kind: "string" },
+                }),
+                makeField({
+                  name: "y",
+                  type: "number",
+                  metadata: { kind: "number" },
+                }),
+              ],
+            },
+          ],
+        },
+      });
+      const result = emitField(field);
+      expect(result).toContain(".nullable()");
+      expect(result).toContain("z.discriminatedUnion(");
+    });
+
     it("wraps discriminated union with .optional()", () => {
       const field = makeField({
         type: "union",

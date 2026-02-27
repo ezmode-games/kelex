@@ -243,9 +243,10 @@ function emitPlainUnion(
   variants: { value: string; fields: FieldDescriptor[] }[],
 ): string {
   const optionExprs = variants.map((variant) => {
-    // Synthetic scalar wrapping: the introspector wraps each scalar option in a
-    // single-field object with generated names ("variant_N" / "option_N").
-    // Unwrap these back to bare scalar expressions.
+    // Heuristic: the introspector wraps non-object union members in synthetic
+    // single-field objects named "variant_N" / "option_N" (see introspect.ts
+    // buildUnionMetadata). Real object variants preserve their original field
+    // names, so this pattern only matches synthetics.
     const isSyntheticScalar =
       variant.value.startsWith("variant_") &&
       variant.fields.length === 1 &&

@@ -375,6 +375,7 @@ describe("round-trip: schema -> introspect -> writeSchema -> eval -> introspect"
     const f2 = descriptor2.fields[0];
     expect(f2.type).toBe("union");
     expect(f2.name).toBe("contact");
+    expect(f2.metadata.kind).toBe("union");
     if (f1.metadata.kind === "union" && f2.metadata.kind === "union") {
       expect(f2.metadata.discriminator).toBe(f1.metadata.discriminator);
       expect(f2.metadata.variants).toHaveLength(f1.metadata.variants.length);
@@ -405,12 +406,31 @@ describe("round-trip: schema -> introspect -> writeSchema -> eval -> introspect"
 
     const f2 = descriptor2.fields[0];
     expect(f2.type).toBe("union");
+    expect(f2.metadata.kind).toBe("union");
     if (f2.metadata.kind === "union") {
       expect(f2.metadata.discriminator).toBe("kind");
       expect(f2.metadata.variants).toHaveLength(3);
       expect(f2.metadata.variants[0].value).toBe("circle");
       expect(f2.metadata.variants[1].value).toBe("square");
       expect(f2.metadata.variants[2].value).toBe("rect");
+    }
+  });
+
+  it("round-trips a plain union of scalars", () => {
+    const schema = z.object({
+      value: z.union([z.string(), z.number()]),
+    });
+    const { descriptor1, descriptor2 } = roundTrip(schema);
+
+    expect(descriptor2.fields[0].type).toBe("union");
+    expect(descriptor2.fields[0].metadata.kind).toBe("union");
+    if (
+      descriptor2.fields[0].metadata.kind === "union" &&
+      descriptor1.fields[0].metadata.kind === "union"
+    ) {
+      expect(descriptor2.fields[0].metadata.variants).toHaveLength(
+        descriptor1.fields[0].metadata.variants.length,
+      );
     }
   });
 
