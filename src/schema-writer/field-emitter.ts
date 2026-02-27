@@ -17,9 +17,19 @@ const SUPPORTED_TYPES = new Set([
 
 /**
  * Emits a Zod v4 expression string for a single FieldDescriptor.
+ * If the field has a schemaRef, returns the identifier directly without
+ * any wrapping (optional, nullable, describe are ignored).
  * All field types are now supported.
  */
 export function emitField(field: FieldDescriptor): string {
+  // When a field references a named schema, emit the identifier as-is.
+  // The referenced schema is responsible for its own shape; wrapping with
+  // optional/nullable/describe is intentionally skipped because the caller
+  // should set those on the referenced schema itself.
+  if (field.schemaRef) {
+    return field.schemaRef;
+  }
+
   if (!SUPPORTED_TYPES.has(field.type)) {
     throw new Error(
       `Unsupported field type "${field.type}" for field "${field.name}". ` +

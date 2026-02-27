@@ -72,6 +72,14 @@ export interface FieldDescriptor {
 
   /** Type-specific metadata (e.g., enum values) */
   metadata: FieldMetadata;
+
+  /**
+   * Reference to a named schema export. When set, the schema-writer emits the
+   * identifier directly instead of inlining the Zod expression.
+   * Example: "addressSchema" causes the field to emit `addressSchema` rather
+   * than `z.object({ ... })`.
+   */
+  schemaRef?: string;
 }
 
 /** Complete form descriptor */

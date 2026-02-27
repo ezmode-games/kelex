@@ -615,6 +615,73 @@ describe("emitField", () => {
     });
   });
 
+  describe("schemaRef", () => {
+    it("returns the ref string directly when schemaRef is set", () => {
+      const field = makeField({
+        name: "address",
+        type: "object",
+        metadata: {
+          kind: "object",
+          fields: [
+            makeField({
+              name: "street",
+              type: "string",
+              metadata: { kind: "string" },
+            }),
+          ],
+        },
+        schemaRef: "addressSchema",
+      });
+      expect(emitField(field)).toBe("addressSchema");
+    });
+
+    it("ignores optional when schemaRef is set", () => {
+      const field = makeField({
+        name: "address",
+        type: "object",
+        isOptional: true,
+        metadata: { kind: "object", fields: [] },
+        schemaRef: "addressSchema",
+      });
+      expect(emitField(field)).toBe("addressSchema");
+    });
+
+    it("ignores nullable when schemaRef is set", () => {
+      const field = makeField({
+        name: "address",
+        type: "object",
+        isNullable: true,
+        metadata: { kind: "object", fields: [] },
+        schemaRef: "addressSchema",
+      });
+      expect(emitField(field)).toBe("addressSchema");
+    });
+
+    it("ignores description when schemaRef is set", () => {
+      const field = makeField({
+        name: "address",
+        type: "object",
+        description: "Mailing address",
+        metadata: { kind: "object", fields: [] },
+        schemaRef: "addressSchema",
+      });
+      expect(emitField(field)).toBe("addressSchema");
+    });
+
+    it("ignores all wrappers when schemaRef is set", () => {
+      const field = makeField({
+        name: "address",
+        type: "object",
+        isOptional: true,
+        isNullable: true,
+        description: "Some address",
+        metadata: { kind: "object", fields: [] },
+        schemaRef: "addressSchema",
+      });
+      expect(emitField(field)).toBe("addressSchema");
+    });
+  });
+
   describe("union fields", () => {
     it("emits z.discriminatedUnion() with 2 variants", () => {
       const field = makeField({
