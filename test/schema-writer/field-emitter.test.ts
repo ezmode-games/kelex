@@ -615,22 +615,238 @@ describe("emitField", () => {
     });
   });
 
-  describe("unsupported types", () => {
-    it("throws on union type", () => {
+  describe("union fields", () => {
+    it("emits z.discriminatedUnion() with 2 variants", () => {
       const field = makeField({
         type: "union",
-        metadata: { kind: "union", variants: [] },
+        metadata: {
+          kind: "union",
+          discriminator: "type",
+          variants: [
+            {
+              value: "email",
+              fields: [
+                makeField({
+                  name: "type",
+                  type: "string",
+                  metadata: { kind: "string" },
+                }),
+                makeField({
+                  name: "address",
+                  type: "string",
+                  metadata: { kind: "string" },
+                }),
+              ],
+            },
+            {
+              value: "phone",
+              fields: [
+                makeField({
+                  name: "type",
+                  type: "string",
+                  metadata: { kind: "string" },
+                }),
+                makeField({
+                  name: "number",
+                  type: "string",
+                  metadata: { kind: "string" },
+                }),
+              ],
+            },
+          ],
+        },
       });
-      expect(() => emitField(field)).toThrow('Unsupported field type "union"');
+      expect(emitField(field)).toBe(
+        'z.discriminatedUnion("type", [z.object({ type: z.literal("email"), address: z.string() }), z.object({ type: z.literal("phone"), number: z.string() })])',
+      );
     });
 
-    it("throws on record type with mismatched metadata", () => {
+    it("emits z.discriminatedUnion() with 3 variants", () => {
       const field = makeField({
-        type: "record",
+        type: "union",
+        metadata: {
+          kind: "union",
+          discriminator: "kind",
+          variants: [
+            {
+              value: "circle",
+              fields: [
+                makeField({
+                  name: "kind",
+                  type: "string",
+                  metadata: { kind: "string" },
+                }),
+                makeField({
+                  name: "radius",
+                  type: "number",
+                  metadata: { kind: "number" },
+                }),
+              ],
+            },
+            {
+              value: "square",
+              fields: [
+                makeField({
+                  name: "kind",
+                  type: "string",
+                  metadata: { kind: "string" },
+                }),
+                makeField({
+                  name: "side",
+                  type: "number",
+                  metadata: { kind: "number" },
+                }),
+              ],
+            },
+            {
+              value: "rectangle",
+              fields: [
+                makeField({
+                  name: "kind",
+                  type: "string",
+                  metadata: { kind: "string" },
+                }),
+                makeField({
+                  name: "width",
+                  type: "number",
+                  metadata: { kind: "number" },
+                }),
+                makeField({
+                  name: "height",
+                  type: "number",
+                  metadata: { kind: "number" },
+                }),
+              ],
+            },
+          ],
+        },
+      });
+      expect(emitField(field)).toBe(
+        'z.discriminatedUnion("kind", [z.object({ kind: z.literal("circle"), radius: z.number() }), z.object({ kind: z.literal("square"), side: z.number() }), z.object({ kind: z.literal("rectangle"), width: z.number(), height: z.number() })])',
+      );
+    });
+
+    it("emits z.union() for plain union of scalars (unwraps synthetic wrapping)", () => {
+      const field = makeField({
+        type: "union",
+        metadata: {
+          kind: "union",
+          variants: [
+            {
+              value: "variant_0",
+              fields: [
+                makeField({
+                  name: "option_0",
+                  type: "string",
+                  metadata: { kind: "string" },
+                }),
+              ],
+            },
+            {
+              value: "variant_1",
+              fields: [
+                makeField({
+                  name: "option_1",
+                  type: "number",
+                  metadata: { kind: "number" },
+                }),
+              ],
+            },
+          ],
+        },
+      });
+      expect(emitField(field)).toBe("z.union([z.string(), z.number()])");
+    });
+
+    it("emits z.union() for plain union of objects", () => {
+      const field = makeField({
+        type: "union",
+        metadata: {
+          kind: "union",
+          variants: [
+            {
+              value: "variant_0",
+              fields: [
+                makeField({
+                  name: "a",
+                  type: "string",
+                  metadata: { kind: "string" },
+                }),
+              ],
+            },
+            {
+              value: "variant_1",
+              fields: [
+                makeField({
+                  name: "b",
+                  type: "number",
+                  metadata: { kind: "number" },
+                }),
+              ],
+            },
+          ],
+        },
+      });
+      expect(emitField(field)).toBe(
+        "z.union([z.object({ a: z.string() }), z.object({ b: z.number() })])",
+      );
+    });
+
+    it("wraps discriminated union with .optional()", () => {
+      const field = makeField({
+        type: "union",
+        isOptional: true,
+        metadata: {
+          kind: "union",
+          discriminator: "type",
+          variants: [
+            {
+              value: "a",
+              fields: [
+                makeField({
+                  name: "type",
+                  type: "string",
+                  metadata: { kind: "string" },
+                }),
+                makeField({
+                  name: "val",
+                  type: "string",
+                  metadata: { kind: "string" },
+                }),
+              ],
+            },
+            {
+              value: "b",
+              fields: [
+                makeField({
+                  name: "type",
+                  type: "string",
+                  metadata: { kind: "string" },
+                }),
+                makeField({
+                  name: "num",
+                  type: "number",
+                  metadata: { kind: "number" },
+                }),
+              ],
+            },
+          ],
+        },
+      });
+      expect(emitField(field)).toBe(
+        'z.discriminatedUnion("type", [z.object({ type: z.literal("a"), val: z.string() }), z.object({ type: z.literal("b"), num: z.number() })]).optional()',
+      );
+    });
+  });
+
+  describe("unsupported types", () => {
+    it("throws on unknown type", () => {
+      const field = makeField({
+        type: "unknown" as "string",
         metadata: { kind: "string" },
       });
       expect(() => emitField(field)).toThrow(
-        'Field "test" has type "record" but metadata kind is "string"',
+        'Unsupported field type "unknown"',
       );
     });
   });

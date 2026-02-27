@@ -362,6 +362,61 @@ describe("round-trip: schema -> introspect -> writeSchema -> eval -> introspect"
     }
   });
 
+  it("round-trips a discriminated union", () => {
+    const schema = z.object({
+      contact: z.discriminatedUnion("type", [
+        z.object({ type: z.literal("email"), address: z.string() }),
+        z.object({ type: z.literal("phone"), number: z.string() }),
+      ]),
+    });
+    const { descriptor1, descriptor2 } = roundTrip(schema);
+
+    const f1 = descriptor1.fields[0];
+    const f2 = descriptor2.fields[0];
+    expect(f2.type).toBe("union");
+    expect(f2.name).toBe("contact");
+    if (f1.metadata.kind === "union" && f2.metadata.kind === "union") {
+      expect(f2.metadata.discriminator).toBe(f1.metadata.discriminator);
+      expect(f2.metadata.variants).toHaveLength(f1.metadata.variants.length);
+      for (let i = 0; i < f1.metadata.variants.length; i++) {
+        expect(f2.metadata.variants[i].value).toBe(
+          f1.metadata.variants[i].value,
+        );
+        expect(f2.metadata.variants[i].fields).toHaveLength(
+          f1.metadata.variants[i].fields.length,
+        );
+      }
+    }
+  });
+
+  it("round-trips a discriminated union with 3 variants", () => {
+    const schema = z.object({
+      shape: z.discriminatedUnion("kind", [
+        z.object({ kind: z.literal("circle"), radius: z.number() }),
+        z.object({ kind: z.literal("square"), side: z.number() }),
+        z.object({
+          kind: z.literal("rect"),
+          width: z.number(),
+          height: z.number(),
+        }),
+      ]),
+    });
+    const { descriptor1, descriptor2 } = roundTrip(schema);
+
+    const f2 = descriptor2.fields[0];
+    expect(f2.type).toBe("union");
+    if (
+      f2.metadata.kind === "union" &&
+      descriptor1.fields[0].metadata.kind === "union"
+    ) {
+      expect(f2.metadata.discriminator).toBe("kind");
+      expect(f2.metadata.variants).toHaveLength(3);
+      expect(f2.metadata.variants[0].value).toBe("circle");
+      expect(f2.metadata.variants[1].value).toBe("square");
+      expect(f2.metadata.variants[2].value).toBe("rect");
+    }
+  });
+
   it("round-trips a complex multi-field schema", () => {
     const schema = z.object({
       name: z.string().min(1),
