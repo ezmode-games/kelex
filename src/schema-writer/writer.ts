@@ -4,8 +4,8 @@ import type { SchemaWriterOptions, SchemaWriterResult } from "./types";
 
 /**
  * Generates Zod v4 source code from a FormDescriptor.
- * Supports scalar types, arrays, and nested objects.
- * Throws on unsupported field types (union, tuple, record).
+ * Supports scalar types, arrays, tuples, nested objects, and unions (plain and discriminated).
+ * Throws on unsupported field types (record).
  */
 export function writeSchema(options: SchemaWriterOptions): SchemaWriterResult {
   const { form } = options;

@@ -12,17 +12,18 @@ const SUPPORTED_TYPES = new Set([
   "tuple",
   "object",
   "record",
+  "union",
 ]);
 
 /**
  * Emits a Zod v4 expression string for a single FieldDescriptor.
- * Throws on unsupported types (union).
+ * All field types are now supported.
  */
 export function emitField(field: FieldDescriptor): string {
   if (!SUPPORTED_TYPES.has(field.type)) {
     throw new Error(
       `Unsupported field type "${field.type}" for field "${field.name}". ` +
-        "Only string, number, boolean, date, enum, array, tuple, object, and record are supported.",
+        "Only string, number, boolean, date, enum, array, tuple, object, record, and union are supported.",
     );
   }
 
@@ -63,6 +64,8 @@ function emitBaseExpression(field: FieldDescriptor): string {
       return emitObject(field);
     case "record":
       return emitRecord(field);
+    case "union":
+      return emitUnion(field);
     default:
       throw new Error(`Unexpected field type: ${field.type}`);
   }
@@ -200,4 +203,64 @@ function emitRecord(field: FieldDescriptor): string {
 
   const valueExpr = emitField(field.metadata.valueDescriptor);
   return `z.record(z.string(), ${valueExpr})`;
+}
+
+function emitUnion(field: FieldDescriptor): string {
+  if (field.metadata.kind !== "union") {
+    throw new Error(
+      `Field "${field.name}" has type "union" but metadata kind is "${field.metadata.kind}"`,
+    );
+  }
+
+  const { discriminator, variants } = field.metadata;
+
+  if (discriminator !== undefined) {
+    return emitDiscriminatedUnion(discriminator, variants);
+  }
+
+  return emitPlainUnion(variants);
+}
+
+function emitDiscriminatedUnion(
+  discriminator: string,
+  variants: { value: string; fields: FieldDescriptor[] }[],
+): string {
+  const variantExprs = variants.map((variant) => {
+    const entries = variant.fields.map((child) => {
+      // The discriminator field introspects as a plain string; reconstruct as z.literal(value).
+      if (child.name === discriminator) {
+        return `${child.name}: z.literal(${JSON.stringify(variant.value)})`;
+      }
+      return `${child.name}: ${emitField(child)}`;
+    });
+    return `z.object({ ${entries.join(", ")} })`;
+  });
+
+  return `z.discriminatedUnion(${JSON.stringify(discriminator)}, [${variantExprs.join(", ")}])`;
+}
+
+function emitPlainUnion(
+  variants: { value: string; fields: FieldDescriptor[] }[],
+): string {
+  const optionExprs = variants.map((variant) => {
+    // Heuristic: the introspector wraps non-object union members in synthetic
+    // single-field objects named "variant_N" / "option_N" (see introspect.ts
+    // buildUnionMetadata). Real object variants preserve their original field
+    // names, so this pattern only matches synthetics.
+    const isSyntheticScalar =
+      variant.value.startsWith("variant_") &&
+      variant.fields.length === 1 &&
+      variant.fields[0].name.startsWith("option_");
+
+    if (isSyntheticScalar) {
+      return emitField(variant.fields[0]);
+    }
+
+    const entries = variant.fields.map(
+      (child) => `${child.name}: ${emitField(child)}`,
+    );
+    return `z.object({ ${entries.join(", ")} })`;
+  });
+
+  return `z.union([${optionExprs.join(", ")}])`;
 }
