@@ -22,10 +22,7 @@ const SUPPORTED_TYPES = new Set([
  * All field types are now supported.
  */
 export function emitField(field: FieldDescriptor): string {
-  // When a field references a named schema, emit the identifier as-is.
-  // The referenced schema is responsible for its own shape; wrapping with
-  // optional/nullable/describe is intentionally skipped because the caller
-  // should set those on the referenced schema itself.
+  // Named schema reference: emit identifier as-is, skip all wrapping.
   if (field.schemaRef) {
     return field.schemaRef;
   }

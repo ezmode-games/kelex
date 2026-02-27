@@ -56,7 +56,7 @@ function emitSchemaDeclaration(form: FormDescriptor): string[] {
 
 /**
  * Collects all schemaRef identifiers used by a FormDescriptor's fields,
- * recursing into nested objects and array elements.
+ * recursing into all nested structures.
  */
 function collectSchemaRefs(form: FormDescriptor): Set<string> {
   const refs = new Set<string>();
@@ -68,9 +68,16 @@ function collectSchemaRefs(form: FormDescriptor): Set<string> {
       }
       if (field.metadata.kind === "object") {
         walk(field.metadata.fields);
-      }
-      if (field.metadata.kind === "array" && field.metadata.element) {
+      } else if (field.metadata.kind === "array") {
         walk([field.metadata.element]);
+      } else if (field.metadata.kind === "union") {
+        for (const variant of field.metadata.variants) {
+          walk(variant.fields);
+        }
+      } else if (field.metadata.kind === "tuple") {
+        walk(field.metadata.elements);
+      } else if (field.metadata.kind === "record") {
+        walk([field.metadata.valueDescriptor]);
       }
     }
   }
@@ -89,9 +96,9 @@ function topologicalSort(schemas: EmbeddedSchema[]): EmbeddedSchema[] {
   const names = schemas.map((s) => s.form.schemaExportName);
   const nameSet = new Set(names);
 
-  // Map each schema name to its EmbeddedSchema and adjacency list
+  // Build lookup tables: each name maps to its schema, adjacency list, and in-degree.
+  // All entries are initialized here, so subsequent .get() calls are guaranteed non-undefined.
   const byName = new Map<string, EmbeddedSchema>();
-  // adj: dependency -> list of dependents (edge means "must come before")
   const adj = new Map<string, string[]>();
   const inDegree = new Map<string, number>();
 
@@ -102,17 +109,13 @@ function topologicalSort(schemas: EmbeddedSchema[]): EmbeddedSchema[] {
     inDegree.set(name, 0);
   }
 
-  // For each schema, find which other embedded schemas it references.
-  // If schema A references schema B, then B must come before A:
-  // edge B -> A in the adjacency list, and A's in-degree increments.
+  // Build edges: if schema A references schema B, B must come before A.
   for (const schema of schemas) {
     const name = schema.form.schemaExportName;
     const refs = collectSchemaRefs(schema.form);
     for (const ref of refs) {
       if (nameSet.has(ref) && ref !== name) {
-        const neighbors = adj.get(ref) ?? [];
-        neighbors.push(name);
-        adj.set(ref, neighbors);
+        (adj.get(ref) ?? []).push(name);
         inDegree.set(name, (inDegree.get(name) ?? 0) + 1);
       }
     }
@@ -121,18 +124,15 @@ function topologicalSort(schemas: EmbeddedSchema[]): EmbeddedSchema[] {
   // Kahn's algorithm: start with nodes that have no incoming edges
   const queue: string[] = [];
   for (const name of names) {
-    if ((inDegree.get(name) ?? 0) === 0) {
+    if (inDegree.get(name) === 0) {
       queue.push(name);
     }
   }
 
   const sorted: EmbeddedSchema[] = [];
   while (queue.length > 0) {
-    const current = queue.shift() ?? "";
-    const schema = byName.get(current);
-    if (schema) {
-      sorted.push(schema);
-    }
+    const current = queue.shift() as string;
+    sorted.push(byName.get(current) as EmbeddedSchema);
 
     for (const neighbor of adj.get(current) ?? []) {
       const newDegree = (inDegree.get(neighbor) ?? 1) - 1;

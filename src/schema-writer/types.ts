@@ -5,8 +5,6 @@ import type { FormDescriptor } from "../introspection";
  * Used when composing multiple schemas in a single file.
  */
 export interface EmbeddedSchema {
-  /** Export name for the schema (e.g., "addressSchema") */
-  name: string;
   /** The FormDescriptor describing the schema's fields */
   form: FormDescriptor;
 }

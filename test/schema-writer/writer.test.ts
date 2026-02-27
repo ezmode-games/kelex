@@ -278,7 +278,7 @@ describe("writeSchema", () => {
 
       const result = writeSchema({
         form: mainForm,
-        embeddedSchemas: [{ name: "addressSchema", form: addressForm }],
+        embeddedSchemas: [{ form: addressForm }],
       });
 
       // Embedded schema appears before main schema
@@ -346,10 +346,7 @@ describe("writeSchema", () => {
 
       const result = writeSchema({
         form: mainForm,
-        embeddedSchemas: [
-          { name: "addressSchema", form: addressForm },
-          { name: "phoneSchema", form: phoneForm },
-        ],
+        embeddedSchemas: [{ form: addressForm }, { form: phoneForm }],
       });
 
       // Both embedded schemas appear before main
@@ -424,10 +421,7 @@ describe("writeSchema", () => {
       // Pass schemas in WRONG order (address before location)
       const result = writeSchema({
         form: mainForm,
-        embeddedSchemas: [
-          { name: "addressSchema", form: addressForm },
-          { name: "locationSchema", form: locationForm },
-        ],
+        embeddedSchemas: [{ form: addressForm }, { form: locationForm }],
       });
 
       // locationSchema must appear before addressSchema
@@ -480,10 +474,7 @@ describe("writeSchema", () => {
       expect(() =>
         writeSchema({
           form: mainForm,
-          embeddedSchemas: [
-            { name: "schemaA", form: schemaA },
-            { name: "schemaB", form: schemaB },
-          ],
+          embeddedSchemas: [{ form: schemaA }, { form: schemaB }],
         }),
       ).toThrow("Circular reference detected");
     });
@@ -554,7 +545,7 @@ describe("writeSchema", () => {
 
       const result = writeSchema({
         form: mainForm,
-        embeddedSchemas: [{ name: "addressSchema", form: addressForm }],
+        embeddedSchemas: [{ form: addressForm }],
       });
 
       const importCount = (result.code.match(/import \{ z \}/g) ?? []).length;
@@ -603,7 +594,7 @@ describe("writeSchema", () => {
 
       const result = writeSchema({
         form: mainForm,
-        embeddedSchemas: [{ name: "addressSchema", form: addressForm }],
+        embeddedSchemas: [{ form: addressForm }],
       });
 
       const expected = [
