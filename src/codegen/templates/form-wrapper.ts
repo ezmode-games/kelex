@@ -20,10 +20,43 @@ export function generateFormFile(input: FormTemplateInput): string {
   const { form } = input;
 
   if (form.steps && form.steps.length > 0) {
+    validateSteps(form);
     return generateWizardFormFile(input);
   }
 
   return generateSingleStepFormFile(input);
+}
+
+/**
+ * Validates that all step field references are valid and all form fields
+ * are assigned to at least one step. Throws on invalid configuration
+ * (fail-hard philosophy).
+ */
+function validateSteps(form: FormDescriptor): void {
+  const steps = form.steps as FormStep[];
+  const fieldNames = new Set(form.fields.map((f) => f.name));
+
+  // Validate that every field referenced in steps actually exists
+  for (const step of steps) {
+    for (const fieldName of step.fields) {
+      if (!fieldNames.has(fieldName)) {
+        throw new Error(
+          `Step "${step.id}" references unknown field "${fieldName}". ` +
+            `Available fields: ${[...fieldNames].join(", ")}`,
+        );
+      }
+    }
+  }
+
+  // Validate that every form field is assigned to at least one step
+  const assignedFields = new Set(steps.flatMap((s) => s.fields));
+  const unassigned = form.fields.filter((f) => !assignedFields.has(f.name));
+  if (unassigned.length > 0) {
+    throw new Error(
+      `Fields not assigned to any step: ${unassigned.map((f) => f.name).join(", ")}. ` +
+        "All fields must be assigned to a step in wizard mode.",
+    );
+  }
 }
 
 /**
@@ -143,17 +176,17 @@ ${defaultValues}
       className="flex flex-col gap-4"
     >
       {/* Step indicator */}
-      <div className="flex items-center gap-2" role="tablist" aria-label="Form steps">
+      <nav className="flex items-center gap-2" aria-label="Form steps">
         {STEPS.map((step, i) => (
-          <div key={step.id} className="flex items-center gap-2" role="tab" aria-selected={i === currentStep}>
-            <div className={\`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium \${i === currentStep ? "bg-gray-900 text-white dark:bg-gray-50 dark:text-gray-900" : i < currentStep ? "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200" : "bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500"}\`}>
+          <div key={step.id} className="flex items-center gap-2" aria-current={i === currentStep ? "step" : undefined}>
+            <div className={\`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium \${i === currentStep ? "bg-primary text-primary-foreground" : i < currentStep ? "bg-muted text-foreground" : "bg-muted text-muted-foreground"}\`}>
               {i + 1}
             </div>
-            <span className={\`text-sm \${i === currentStep ? "font-medium" : "text-gray-500"}\`}>{step.label}</span>
-            {i < STEPS.length - 1 && <div className="h-px w-8 bg-gray-200 dark:bg-gray-700" />}
+            <span className={\`text-sm \${i === currentStep ? "font-medium" : "text-muted-foreground"}\`}>{step.label}</span>
+            {i < STEPS.length - 1 && <div className="h-px w-8 bg-border" />}
           </div>
         ))}
-      </div>
+      </nav>
 
       {/* Step content */}
       <Card>
@@ -435,16 +468,32 @@ function generateAllFieldsJSX(
 }
 
 /**
+ * Escapes a string for safe inclusion in a JavaScript string literal.
+ * Handles quotes, backslashes, newlines, and other special characters.
+ */
+function escapeJSString(value: string): string {
+  return value
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, "\\n")
+    .replace(/\r/g, "\\r")
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e");
+}
+
+/**
  * Generates the STEPS constant array from FormStep definitions.
  */
 function generateStepsConstant(steps: FormStep[]): string {
   const entries = steps.map((step) => {
-    const fields = `[${step.fields.map((f) => `"${f}"`).join(", ")}]`;
-    const desc = step.description ? `, description: "${step.description}"` : "";
-    return `  { id: "${step.id}", label: "${step.label}"${desc}, fields: ${fields} },`;
+    const fields = `[${step.fields.map((f) => `"${escapeJSString(f)}"`).join(", ")}]`;
+    const desc = step.description
+      ? `, description: "${escapeJSString(step.description)}"`
+      : "";
+    return `  { id: "${escapeJSString(step.id)}", label: "${escapeJSString(step.label)}"${desc}, fields: ${fields} },`;
   });
 
-  return `const STEPS = [\n${entries.join("\n")}\n];`;
+  return `const STEPS = [\n${entries.join("\n")}\n] as const;`;
 }
 
 /**

@@ -802,6 +802,11 @@ describe("generateFormFile", () => {
         const output = generateWizardOutput();
         expect(output).toContain('description: "Configure permissions"');
       });
+
+      it("uses as const for type inference", () => {
+        const output = generateWizardOutput();
+        expect(output).toContain("] as const;");
+      });
     });
 
     describe("step state management", () => {
@@ -821,16 +826,20 @@ describe("generateFormFile", () => {
     });
 
     describe("step indicator", () => {
-      it("renders step indicator with tablist role", () => {
+      it("renders step indicator with navigation role", () => {
         const output = generateWizardOutput();
-        expect(output).toContain('role="tablist"');
+        expect(output).toContain("<nav");
         expect(output).toContain('aria-label="Form steps"');
+        expect(output).not.toContain('role="tablist"');
       });
 
-      it("renders step items with tab role", () => {
+      it("marks active step with aria-current", () => {
         const output = generateWizardOutput();
-        expect(output).toContain('role="tab"');
-        expect(output).toContain("aria-selected={i === currentStep}");
+        expect(output).toContain(
+          'aria-current={i === currentStep ? "step" : undefined}',
+        );
+        expect(output).not.toContain('role="tab"');
+        expect(output).not.toContain("aria-selected");
       });
 
       it("renders step numbers and labels", () => {
@@ -842,8 +851,20 @@ describe("generateFormFile", () => {
       it("renders step separator between steps", () => {
         const output = generateWizardOutput();
         expect(output).toContain(
-          '{i < STEPS.length - 1 && <div className="h-px w-8 bg-gray-200 dark:bg-gray-700" />}',
+          '{i < STEPS.length - 1 && <div className="h-px w-8 bg-border" />}',
         );
+      });
+
+      it("uses semantic color tokens instead of hardcoded colors", () => {
+        const output = generateWizardOutput();
+        expect(output).toContain("bg-primary");
+        expect(output).toContain("text-primary-foreground");
+        expect(output).toContain("bg-muted");
+        expect(output).toContain("text-muted-foreground");
+        expect(output).not.toContain("bg-gray-");
+        expect(output).not.toContain("text-gray-");
+        expect(output).not.toContain("bg-blue-");
+        expect(output).not.toContain("text-white");
       });
     });
 
@@ -959,12 +980,13 @@ describe("generateFormFile", () => {
         );
         expect(output).toContain("interface UserFormProps {");
         expect(output).toContain("const STEPS = [");
+        expect(output).toContain("] as const;");
         expect(output).toContain("export function UserForm(");
         expect(output).toContain(
           "const [currentStep, setCurrentStep] = useState(0);",
         );
         expect(output).toContain("async function handleNext()");
-        expect(output).toContain('role="tablist"');
+        expect(output).toContain('aria-label="Form steps"');
         expect(output).toContain("<Card>");
         expect(output).toContain("{currentStep === 0 && (<>");
         expect(output).toContain("{currentStep === 1 && (<>");
@@ -1050,6 +1072,156 @@ describe("generateFormFile", () => {
         expect(output).toContain('id: "personal", label: "Personal"');
         expect(output).toContain('id: "contact", label: "Contact"');
         expect(output).toContain('id: "company", label: "Company"');
+      });
+    });
+
+    describe("step validation", () => {
+      it("throws when a step references an unknown field", () => {
+        const form = createForm({
+          fields: [createField({ name: "name" })],
+          steps: [
+            {
+              id: "step1",
+              label: "Step 1",
+              fields: ["name", "nonExistentField"],
+            },
+          ],
+        });
+        const fieldConfigs = new Map<string, ComponentConfig>([
+          [
+            "name",
+            createConfig({
+              fieldProps: { label: "Name", required: true },
+            }),
+          ],
+        ]);
+
+        expect(() =>
+          generateFormFile({
+            form,
+            fieldConfigs,
+            uiImportPath: "@/components/ui",
+          }),
+        ).toThrow('Step "step1" references unknown field "nonExistentField"');
+      });
+
+      it("throws when a form field is not assigned to any step", () => {
+        const form = createForm({
+          fields: [
+            createField({ name: "name" }),
+            createField({ name: "email" }),
+            createField({ name: "orphaned" }),
+          ],
+          steps: [{ id: "step1", label: "Step 1", fields: ["name", "email"] }],
+        });
+        const fieldConfigs = new Map<string, ComponentConfig>([
+          [
+            "name",
+            createConfig({
+              fieldProps: { label: "Name", required: true },
+            }),
+          ],
+          [
+            "email",
+            createConfig({
+              fieldProps: { label: "Email", required: true },
+            }),
+          ],
+          [
+            "orphaned",
+            createConfig({
+              fieldProps: { label: "Orphaned", required: true },
+            }),
+          ],
+        ]);
+
+        expect(() =>
+          generateFormFile({
+            form,
+            fieldConfigs,
+            uiImportPath: "@/components/ui",
+          }),
+        ).toThrow("Fields not assigned to any step: orphaned");
+      });
+    });
+
+    describe("step label escaping", () => {
+      it("escapes special characters in step labels", () => {
+        const form = createForm({
+          fields: [
+            createField({ name: "name" }),
+            createField({ name: "email" }),
+          ],
+          steps: [
+            {
+              id: "step1",
+              label: 'Personal "Info"',
+              fields: ["name"],
+            },
+            {
+              id: "step2",
+              label: "Contact <Details>",
+              fields: ["email"],
+            },
+          ],
+        });
+        const fieldConfigs = new Map<string, ComponentConfig>([
+          [
+            "name",
+            createConfig({
+              fieldProps: { label: "Name", required: true },
+            }),
+          ],
+          [
+            "email",
+            createConfig({
+              fieldProps: { label: "Email", required: true },
+            }),
+          ],
+        ]);
+
+        const output = generateFormFile({
+          form,
+          fieldConfigs,
+          uiImportPath: "@/components/ui",
+        });
+
+        // Quotes should be escaped
+        expect(output).toContain('label: "Personal \\"Info\\""');
+        // Angle brackets should be escaped
+        expect(output).toContain('label: "Contact \\u003cDetails\\u003e"');
+      });
+
+      it("escapes special characters in step descriptions", () => {
+        const form = createForm({
+          fields: [createField({ name: "name" })],
+          steps: [
+            {
+              id: "step1",
+              label: "Step 1",
+              description: 'Enter your "name" & <details>',
+              fields: ["name"],
+            },
+          ],
+        });
+        const fieldConfigs = new Map<string, ComponentConfig>([
+          [
+            "name",
+            createConfig({
+              fieldProps: { label: "Name", required: true },
+            }),
+          ],
+        ]);
+
+        const output = generateFormFile({
+          form,
+          fieldConfigs,
+          uiImportPath: "@/components/ui",
+        });
+
+        expect(output).toContain(
+          'description: "Enter your \\"name\\" & \\u003cdetails\\u003e"',
+        );
       });
     });
   });
