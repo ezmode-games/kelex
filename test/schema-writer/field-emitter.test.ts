@@ -212,6 +212,88 @@ describe("emitField", () => {
     });
   });
 
+  describe("tuple fields", () => {
+    it("emits z.tuple() with mixed scalar elements", () => {
+      const field = makeField({
+        type: "tuple",
+        metadata: {
+          kind: "tuple",
+          elements: [
+            makeField({
+              name: "0",
+              type: "string",
+              metadata: { kind: "string" },
+            }),
+            makeField({
+              name: "1",
+              type: "number",
+              metadata: { kind: "number" },
+            }),
+            makeField({
+              name: "2",
+              type: "boolean",
+              metadata: { kind: "boolean" },
+            }),
+          ],
+        },
+      });
+      expect(emitField(field)).toBe(
+        "z.tuple([z.string(), z.number(), z.boolean()])",
+      );
+    });
+
+    it("emits z.tuple() with constrained elements", () => {
+      const field = makeField({
+        type: "tuple",
+        metadata: {
+          kind: "tuple",
+          elements: [
+            makeField({
+              name: "0",
+              type: "string",
+              constraints: { minLength: 1 },
+              metadata: { kind: "string" },
+            }),
+            makeField({
+              name: "1",
+              type: "number",
+              constraints: { min: 0, max: 100 },
+              metadata: { kind: "number" },
+            }),
+          ],
+        },
+      });
+      expect(emitField(field)).toBe(
+        "z.tuple([z.string().min(1), z.number().min(0).max(100)])",
+      );
+    });
+
+    it("emits z.tuple().optional() for optional tuple", () => {
+      const field = makeField({
+        type: "tuple",
+        isOptional: true,
+        metadata: {
+          kind: "tuple",
+          elements: [
+            makeField({
+              name: "0",
+              type: "string",
+              metadata: { kind: "string" },
+            }),
+            makeField({
+              name: "1",
+              type: "number",
+              metadata: { kind: "number" },
+            }),
+          ],
+        },
+      });
+      expect(emitField(field)).toBe(
+        "z.tuple([z.string(), z.number()]).optional()",
+      );
+    });
+  });
+
   describe("optional and nullable wrapping", () => {
     it("wraps with .optional()", () => {
       const field = makeField({
@@ -460,14 +542,6 @@ describe("emitField", () => {
         metadata: { kind: "union", variants: [] },
       });
       expect(() => emitField(field)).toThrow('Unsupported field type "union"');
-    });
-
-    it("throws on tuple type", () => {
-      const field = makeField({
-        type: "tuple",
-        metadata: { kind: "tuple", elements: [] },
-      });
-      expect(() => emitField(field)).toThrow('Unsupported field type "tuple"');
     });
 
     it("throws on record type", () => {

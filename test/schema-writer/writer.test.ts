@@ -177,21 +177,6 @@ describe("writeSchema", () => {
       );
     });
 
-    it("throws on unsupported tuple type", () => {
-      const form = makeForm({
-        fields: [
-          makeField({
-            name: "pair",
-            type: "tuple",
-            metadata: { kind: "tuple", elements: [] },
-          }),
-        ],
-      });
-      expect(() => writeSchema({ form })).toThrow(
-        'Unsupported field type "tuple"',
-      );
-    });
-
     it("throws on unsupported record type", () => {
       const form = makeForm({
         fields: [
