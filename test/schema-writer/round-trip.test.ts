@@ -200,6 +200,8 @@ describe("round-trip: schema -> introspect -> writeSchema -> eval -> introspect"
     const { descriptor1, descriptor2 } = roundTrip(schema);
 
     expect(descriptor2.fields[0].type).toBe("tuple");
+    expect(descriptor2.fields[0].metadata.kind).toBe("tuple");
+    expect(descriptor1.fields[0].metadata.kind).toBe("tuple");
     if (
       descriptor2.fields[0].metadata.kind === "tuple" &&
       descriptor1.fields[0].metadata.kind === "tuple"
@@ -210,6 +212,25 @@ describe("round-trip: schema -> introspect -> writeSchema -> eval -> introspect"
       expect(descriptor2.fields[0].metadata.elements[0].type).toBe("string");
       expect(descriptor2.fields[0].metadata.elements[1].type).toBe("number");
       expect(descriptor2.fields[0].metadata.elements[2].type).toBe("boolean");
+    }
+  });
+
+  it("round-trips a tuple of [string, number]", () => {
+    const schema = z.object({
+      pair: z.tuple([z.string(), z.number()]),
+    });
+    const { descriptor1, descriptor2 } = roundTrip(schema);
+
+    expect(descriptor2.fields[0].type).toBe("tuple");
+    expect(descriptor2.fields[0].metadata.kind).toBe("tuple");
+    expect(descriptor1.fields[0].metadata.kind).toBe("tuple");
+    if (
+      descriptor2.fields[0].metadata.kind === "tuple" &&
+      descriptor1.fields[0].metadata.kind === "tuple"
+    ) {
+      expect(descriptor2.fields[0].metadata.elements).toHaveLength(
+        descriptor1.fields[0].metadata.elements.length,
+      );
     }
   });
 

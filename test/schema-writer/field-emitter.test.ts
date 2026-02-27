@@ -292,6 +292,24 @@ describe("emitField", () => {
         "z.tuple([z.string(), z.number()]).optional()",
       );
     });
+
+    it("emits z.tuple().nullable() for nullable tuple", () => {
+      const field = makeField({
+        type: "tuple",
+        isNullable: true,
+        metadata: {
+          kind: "tuple",
+          elements: [
+            makeField({
+              name: "0",
+              type: "string",
+              metadata: { kind: "string" },
+            }),
+          ],
+        },
+      });
+      expect(emitField(field)).toBe("z.tuple([z.string()]).nullable()");
+    });
   });
 
   describe("optional and nullable wrapping", () => {
