@@ -204,13 +204,12 @@ describe("round-trip: schema -> introspect -> writeSchema -> eval -> introspect"
       descriptor2.fields[0].metadata.kind === "tuple" &&
       descriptor1.fields[0].metadata.kind === "tuple"
     ) {
-      expect(descriptor2.fields[0].metadata.elements).toHaveLength(3);
-      expect(descriptor2.fields[0].metadata.elements[0].type).toBe("string");
-      expect(descriptor2.fields[0].metadata.elements[1].type).toBe("number");
-      expect(descriptor2.fields[0].metadata.elements[2].type).toBe("boolean");
       expect(descriptor2.fields[0].metadata.elements).toHaveLength(
         descriptor1.fields[0].metadata.elements.length,
       );
+      expect(descriptor2.fields[0].metadata.elements[0].type).toBe("string");
+      expect(descriptor2.fields[0].metadata.elements[1].type).toBe("number");
+      expect(descriptor2.fields[0].metadata.elements[2].type).toBe("boolean");
     }
   });
 

@@ -166,8 +166,10 @@ function emitTuple(field: FieldDescriptor): string {
     );
   }
 
-  const elementExprs = field.metadata.elements.map((el) => emitField(el));
-  return `z.tuple([${elementExprs.join(", ")}])`;
+  const elements = field.metadata.elements
+    .map((el) => emitField(el))
+    .join(", ");
+  return `z.tuple([${elements}])`;
 }
 
 function emitObject(field: FieldDescriptor): string {
