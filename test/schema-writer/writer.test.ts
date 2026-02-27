@@ -129,22 +129,39 @@ describe("writeSchema", () => {
     });
   });
 
-  describe("error handling", () => {
-    it("throws on unsupported object type", () => {
+  describe("nested object fields", () => {
+    it("emits nested object fields", () => {
       const form = makeForm({
         fields: [
           makeField({
-            name: "nested",
+            name: "address",
             type: "object",
-            metadata: { kind: "object", fields: [] },
+            metadata: {
+              kind: "object",
+              fields: [
+                makeField({
+                  name: "street",
+                  type: "string",
+                  metadata: { kind: "string" },
+                }),
+                makeField({
+                  name: "city",
+                  type: "string",
+                  metadata: { kind: "string" },
+                }),
+              ],
+            },
           }),
         ],
       });
-      expect(() => writeSchema({ form })).toThrow(
-        'Unsupported field type "object"',
+      const result = writeSchema({ form });
+      expect(result.code).toContain(
+        "address: z.object({ street: z.string(), city: z.string() }),",
       );
     });
+  });
 
+  describe("error handling", () => {
     it("throws on unsupported union type", () => {
       const form = makeForm({
         fields: [

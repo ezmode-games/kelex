@@ -1,18 +1,21 @@
 import { inferTypeName } from "../codegen";
-import { emitField } from "./field-emitter";
+import { emitField, VALID_IDENTIFIER } from "./field-emitter";
 import type { SchemaWriterOptions, SchemaWriterResult } from "./types";
 
 /**
  * Generates Zod v4 source code from a FormDescriptor.
- * Only supports scalar types and arrays of scalars/enums.
- * Throws on unsupported field types (object, union, tuple, record).
+ * Supports scalar types, arrays, and nested objects.
+ * Throws on unsupported field types (union, tuple, record).
  */
 export function writeSchema(options: SchemaWriterOptions): SchemaWriterResult {
   const { form } = options;
 
-  const fieldEntries = form.fields.map(
-    (field) => `  ${field.name}: ${emitField(field)},`,
-  );
+  const fieldEntries = form.fields.map((field) => {
+    const key = VALID_IDENTIFIER.test(field.name)
+      ? field.name
+      : JSON.stringify(field.name);
+    return `  ${key}: ${emitField(field)},`;
+  });
 
   const typeName = inferTypeName(form.schemaExportName);
 
