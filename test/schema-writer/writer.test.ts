@@ -129,6 +129,38 @@ describe("writeSchema", () => {
     });
   });
 
+  describe("tuple fields", () => {
+    it("generates tuple field in schema output", () => {
+      const form = makeForm({
+        fields: [
+          makeField({
+            name: "coord",
+            type: "tuple",
+            metadata: {
+              kind: "tuple",
+              elements: [
+                makeField({
+                  name: "0",
+                  type: "string",
+                  metadata: { kind: "string" },
+                }),
+                makeField({
+                  name: "1",
+                  type: "number",
+                  metadata: { kind: "number" },
+                }),
+              ],
+            },
+          }),
+        ],
+      });
+      const result = writeSchema({ form });
+      expect(result.code).toContain(
+        "coord: z.tuple([z.string(), z.number()]),",
+      );
+    });
+  });
+
   describe("nested object fields", () => {
     it("emits nested object fields", () => {
       const form = makeForm({
@@ -174,21 +206,6 @@ describe("writeSchema", () => {
       });
       expect(() => writeSchema({ form })).toThrow(
         'Unsupported field type "union"',
-      );
-    });
-
-    it("throws on unsupported tuple type", () => {
-      const form = makeForm({
-        fields: [
-          makeField({
-            name: "pair",
-            type: "tuple",
-            metadata: { kind: "tuple", elements: [] },
-          }),
-        ],
-      });
-      expect(() => writeSchema({ form })).toThrow(
-        'Unsupported field type "tuple"',
       );
     });
 
