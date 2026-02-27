@@ -1,6 +1,6 @@
 import type { FieldDescriptor } from "../introspection";
 
-export const VALID_IDENTIFIER = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
+const VALID_IDENTIFIER = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
 
 const SUPPORTED_TYPES = new Set([
   "string",
@@ -17,14 +17,23 @@ const SUPPORTED_TYPES = new Set([
 
 /**
  * Emits a Zod v4 expression string for a single FieldDescriptor.
- * If the field has a schemaRef, returns the identifier directly without
- * any wrapping (optional, nullable, describe are ignored).
+ * If the field has a schemaRef, returns the identifier with optional/nullable
+ * chaining but without re-emitting the full schema body.
  * All field types are now supported.
  */
 export function emitField(field: FieldDescriptor): string {
-  // Named schema reference: emit identifier as-is, skip all wrapping.
+  // Named schema reference: emit validated identifier, chain optional/nullable.
   if (field.schemaRef) {
-    return field.schemaRef;
+    if (!VALID_IDENTIFIER.test(field.schemaRef)) {
+      throw new Error(
+        `Invalid schemaRef "${field.schemaRef}" for field "${field.name}". ` +
+          "schemaRef must be a valid JavaScript identifier.",
+      );
+    }
+    let expr = field.schemaRef;
+    if (field.isNullable) expr += ".nullable()";
+    if (field.isOptional) expr += ".optional()";
+    return expr;
   }
 
   if (!SUPPORTED_TYPES.has(field.type)) {
