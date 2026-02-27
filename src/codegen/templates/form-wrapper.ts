@@ -123,7 +123,7 @@ ${defaultValues}
     const stepFields = STEPS[currentStep].fields;
     let hasErrors = false;
     for (const fieldName of stepFields) {
-      await form.validateField(fieldName, 'change');
+      await form.validateField(fieldName, 'submit');
       if (form.getFieldMeta(fieldName)?.errors?.length) {
         hasErrors = true;
       }
@@ -410,6 +410,14 @@ function getDefaultValueForField(
   }
 }
 
+function indentJSX(jsx: string, spaces: number): string {
+  const pad = " ".repeat(spaces);
+  return jsx
+    .split("\n")
+    .map((line) => `${pad}${line}`)
+    .join("\n");
+}
+
 function generateAllFieldsJSX(
   fields: FieldDescriptor[],
   fieldConfigs: Map<string, ComponentConfig>,
@@ -419,13 +427,7 @@ function generateAllFieldsJSX(
   for (const field of fields) {
     const config = fieldConfigs.get(field.name);
     if (config) {
-      const jsx = generateFieldJSX(field, config);
-      // Indent each line by 6 spaces for proper form structure
-      const indented = jsx
-        .split("\n")
-        .map((line) => `      ${line}`)
-        .join("\n");
-      fieldJSXs.push(indented);
+      fieldJSXs.push(indentJSX(generateFieldJSX(field, config), 6));
     }
   }
 
@@ -437,11 +439,9 @@ function generateAllFieldsJSX(
  */
 function generateStepsConstant(steps: FormStep[]): string {
   const entries = steps.map((step) => {
-    const fieldsStr = step.fields.map((f) => `"${f}"`).join(", ");
-    const descPart = step.description
-      ? `, description: "${step.description}"`
-      : "";
-    return `  { id: "${step.id}", label: "${step.label}"${descPart}, fields: [${fieldsStr}] },`;
+    const fields = `[${step.fields.map((f) => `"${f}"`).join(", ")}]`;
+    const desc = step.description ? `, description: "${step.description}"` : "";
+    return `  { id: "${step.id}", label: "${step.label}"${desc}, fields: ${fields} },`;
   });
 
   return `const STEPS = [\n${entries.join("\n")}\n];`;
@@ -456,38 +456,22 @@ function generateStepContentBlocks(
   fields: FieldDescriptor[],
   fieldConfigs: Map<string, ComponentConfig>,
 ): string {
-  const fieldMap = new Map<string, FieldDescriptor>();
-  for (const field of fields) {
-    fieldMap.set(field.name, field);
-  }
+  const fieldsByName = new Map(fields.map((f) => [f.name, f]));
 
-  const blocks: string[] = [];
+  return steps
+    .map((step, stepIndex) => {
+      const fieldJSXs = step.fields
+        .filter((name) => fieldsByName.has(name) && fieldConfigs.has(name))
+        .map((name) => {
+          const field = fieldsByName.get(name) as FieldDescriptor;
+          const config = fieldConfigs.get(name) as ComponentConfig;
+          return indentJSX(generateFieldJSX(field, config), 12);
+        });
 
-  for (let stepIndex = 0; stepIndex < steps.length; stepIndex++) {
-    const step = steps[stepIndex];
-    const fieldJSXs: string[] = [];
-
-    for (const fieldName of step.fields) {
-      const field = fieldMap.get(fieldName);
-      const config = fieldConfigs.get(fieldName);
-      if (field && config) {
-        const jsx = generateFieldJSX(field, config);
-        // Indent for placement inside CardContent > fragment
-        const indented = jsx
-          .split("\n")
-          .map((line) => `            ${line}`)
-          .join("\n");
-        fieldJSXs.push(indented);
-      }
-    }
-
-    const fieldsContent = fieldJSXs.join("\n\n");
-    blocks.push(
-      `          {currentStep === ${stepIndex} && (<>\n${fieldsContent}\n          </>)}`,
-    );
-  }
-
-  return blocks.join("\n");
+      const fieldsContent = fieldJSXs.join("\n\n");
+      return `          {currentStep === ${stepIndex} && (<>\n${fieldsContent}\n          </>)}`;
+    })
+    .join("\n");
 }
 
 export { inferTypeName };

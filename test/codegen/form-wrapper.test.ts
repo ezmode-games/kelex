@@ -719,26 +719,23 @@ describe("generateFormFile", () => {
       return { form, fieldConfigs };
     }
 
+    function generateWizardOutput(): string {
+      const { form, fieldConfigs } = createWizardForm();
+      return generateFormFile({
+        form,
+        fieldConfigs,
+        uiImportPath: "@/components/ui",
+      });
+    }
+
     describe("imports", () => {
       it("imports useState from React", () => {
-        const { form, fieldConfigs } = createWizardForm();
-        const output = generateFormFile({
-          form,
-          fieldConfigs,
-          uiImportPath: "@/components/ui",
-        });
-
+        const output = generateWizardOutput();
         expect(output).toContain("import { useState } from 'react';");
       });
 
       it("imports Card components for step containers", () => {
-        const { form, fieldConfigs } = createWizardForm();
-        const output = generateFormFile({
-          form,
-          fieldConfigs,
-          uiImportPath: "@/components/ui",
-        });
-
+        const output = generateWizardOutput();
         expect(output).toContain("Card,");
         expect(output).toContain("CardContent,");
         expect(output).toContain("CardHeader,");
@@ -789,64 +786,34 @@ describe("generateFormFile", () => {
 
     describe("STEPS constant", () => {
       it("generates STEPS constant with step definitions", () => {
-        const { form, fieldConfigs } = createWizardForm();
-        const output = generateFormFile({
-          form,
-          fieldConfigs,
-          uiImportPath: "@/components/ui",
-        });
-
+        const output = generateWizardOutput();
         expect(output).toContain("const STEPS = [");
         expect(output).toContain('id: "basics", label: "Basic Info"');
         expect(output).toContain('id: "role", label: "Role & Status"');
       });
 
       it("includes step field names in STEPS", () => {
-        const { form, fieldConfigs } = createWizardForm();
-        const output = generateFormFile({
-          form,
-          fieldConfigs,
-          uiImportPath: "@/components/ui",
-        });
-
+        const output = generateWizardOutput();
         expect(output).toContain('fields: ["name", "email"]');
         expect(output).toContain('fields: ["role", "active"]');
       });
 
       it("includes step description when provided", () => {
-        const { form, fieldConfigs } = createWizardForm();
-        const output = generateFormFile({
-          form,
-          fieldConfigs,
-          uiImportPath: "@/components/ui",
-        });
-
+        const output = generateWizardOutput();
         expect(output).toContain('description: "Configure permissions"');
       });
     });
 
     describe("step state management", () => {
       it("uses useState for step tracking", () => {
-        const { form, fieldConfigs } = createWizardForm();
-        const output = generateFormFile({
-          form,
-          fieldConfigs,
-          uiImportPath: "@/components/ui",
-        });
-
+        const output = generateWizardOutput();
         expect(output).toContain(
           "const [currentStep, setCurrentStep] = useState(0);",
         );
       });
 
       it("computes isLastStep", () => {
-        const { form, fieldConfigs } = createWizardForm();
-        const output = generateFormFile({
-          form,
-          fieldConfigs,
-          uiImportPath: "@/components/ui",
-        });
-
+        const output = generateWizardOutput();
         expect(output).toContain(
           "const isLastStep = currentStep === STEPS.length - 1;",
         );
@@ -855,49 +822,25 @@ describe("generateFormFile", () => {
 
     describe("step indicator", () => {
       it("renders step indicator with tablist role", () => {
-        const { form, fieldConfigs } = createWizardForm();
-        const output = generateFormFile({
-          form,
-          fieldConfigs,
-          uiImportPath: "@/components/ui",
-        });
-
+        const output = generateWizardOutput();
         expect(output).toContain('role="tablist"');
         expect(output).toContain('aria-label="Form steps"');
       });
 
       it("renders step items with tab role", () => {
-        const { form, fieldConfigs } = createWizardForm();
-        const output = generateFormFile({
-          form,
-          fieldConfigs,
-          uiImportPath: "@/components/ui",
-        });
-
+        const output = generateWizardOutput();
         expect(output).toContain('role="tab"');
         expect(output).toContain("aria-selected={i === currentStep}");
       });
 
       it("renders step numbers and labels", () => {
-        const { form, fieldConfigs } = createWizardForm();
-        const output = generateFormFile({
-          form,
-          fieldConfigs,
-          uiImportPath: "@/components/ui",
-        });
-
+        const output = generateWizardOutput();
         expect(output).toContain("{i + 1}");
         expect(output).toContain("{step.label}");
       });
 
       it("renders step separator between steps", () => {
-        const { form, fieldConfigs } = createWizardForm();
-        const output = generateFormFile({
-          form,
-          fieldConfigs,
-          uiImportPath: "@/components/ui",
-        });
-
+        const output = generateWizardOutput();
         expect(output).toContain(
           '{i < STEPS.length - 1 && <div className="h-px w-8 bg-gray-200 dark:bg-gray-700" />}',
         );
@@ -906,13 +849,7 @@ describe("generateFormFile", () => {
 
     describe("step content", () => {
       it("wraps step content in Card", () => {
-        const { form, fieldConfigs } = createWizardForm();
-        const output = generateFormFile({
-          form,
-          fieldConfigs,
-          uiImportPath: "@/components/ui",
-        });
-
+        const output = generateWizardOutput();
         expect(output).toContain("<Card>");
         expect(output).toContain("<CardHeader>");
         expect(output).toContain(
@@ -922,26 +859,13 @@ describe("generateFormFile", () => {
       });
 
       it("groups fields by step with conditional rendering", () => {
-        const { form, fieldConfigs } = createWizardForm();
-        const output = generateFormFile({
-          form,
-          fieldConfigs,
-          uiImportPath: "@/components/ui",
-        });
-
+        const output = generateWizardOutput();
         expect(output).toContain("{currentStep === 0 && (<>");
         expect(output).toContain("{currentStep === 1 && (<>");
       });
 
       it("renders step 0 fields (name and email)", () => {
-        const { form, fieldConfigs } = createWizardForm();
-        const output = generateFormFile({
-          form,
-          fieldConfigs,
-          uiImportPath: "@/components/ui",
-        });
-
-        // Fields for step 0 should be inside currentStep === 0 block
+        const output = generateWizardOutput();
         const step0Start = output.indexOf("{currentStep === 0");
         const step0End = output.indexOf("</>)}", step0Start);
         const step0Block = output.slice(step0Start, step0End);
@@ -951,14 +875,7 @@ describe("generateFormFile", () => {
       });
 
       it("renders step 1 fields (role and active)", () => {
-        const { form, fieldConfigs } = createWizardForm();
-        const output = generateFormFile({
-          form,
-          fieldConfigs,
-          uiImportPath: "@/components/ui",
-        });
-
-        // Fields for step 1 should be inside currentStep === 1 block
+        const output = generateWizardOutput();
         const step1Start = output.indexOf("{currentStep === 1");
         const step1End = output.indexOf("</>)}", step1Start);
         const step1Block = output.slice(step1Start, step1End);
@@ -970,29 +887,17 @@ describe("generateFormFile", () => {
 
     describe("per-step validation", () => {
       it("generates handleNext function", () => {
-        const { form, fieldConfigs } = createWizardForm();
-        const output = generateFormFile({
-          form,
-          fieldConfigs,
-          uiImportPath: "@/components/ui",
-        });
-
+        const output = generateWizardOutput();
         expect(output).toContain("async function handleNext()");
       });
 
       it("validates step fields before advancing", () => {
-        const { form, fieldConfigs } = createWizardForm();
-        const output = generateFormFile({
-          form,
-          fieldConfigs,
-          uiImportPath: "@/components/ui",
-        });
-
+        const output = generateWizardOutput();
         expect(output).toContain(
           "const stepFields = STEPS[currentStep].fields;",
         );
         expect(output).toContain(
-          "await form.validateField(fieldName, 'change');",
+          "await form.validateField(fieldName, 'submit');",
         );
         expect(output).toContain(
           "form.getFieldMeta(fieldName)?.errors?.length",
@@ -1000,13 +905,7 @@ describe("generateFormFile", () => {
       });
 
       it("only advances when no errors", () => {
-        const { form, fieldConfigs } = createWizardForm();
-        const output = generateFormFile({
-          form,
-          fieldConfigs,
-          uiImportPath: "@/components/ui",
-        });
-
+        const output = generateWizardOutput();
         expect(output).toContain("if (!hasErrors)");
         expect(output).toContain("setCurrentStep((s) => s + 1)");
       });
@@ -1014,13 +913,7 @@ describe("generateFormFile", () => {
 
     describe("navigation buttons", () => {
       it("renders Back button for non-first steps", () => {
-        const { form, fieldConfigs } = createWizardForm();
-        const output = generateFormFile({
-          form,
-          fieldConfigs,
-          uiImportPath: "@/components/ui",
-        });
-
+        const output = generateWizardOutput();
         expect(output).toContain("{currentStep > 0 && (");
         expect(output).toContain(
           '<Button type="button" variant="outline" onClick={() => setCurrentStep((s) => s - 1)}>Back</Button>',
@@ -1028,61 +921,32 @@ describe("generateFormFile", () => {
       });
 
       it("renders empty spacer div on first step", () => {
-        const { form, fieldConfigs } = createWizardForm();
-        const output = generateFormFile({
-          form,
-          fieldConfigs,
-          uiImportPath: "@/components/ui",
-        });
-
+        const output = generateWizardOutput();
         expect(output).toContain("{currentStep === 0 && <div />}");
       });
 
       it("renders Submit button on last step", () => {
-        const { form, fieldConfigs } = createWizardForm();
-        const output = generateFormFile({
-          form,
-          fieldConfigs,
-          uiImportPath: "@/components/ui",
-        });
-
+        const output = generateWizardOutput();
         expect(output).toContain("{isLastStep ? (");
         expect(output).toContain('<Button type="submit">Submit</Button>');
       });
 
       it("renders Next button on non-last steps", () => {
-        const { form, fieldConfigs } = createWizardForm();
-        const output = generateFormFile({
-          form,
-          fieldConfigs,
-          uiImportPath: "@/components/ui",
-        });
-
+        const output = generateWizardOutput();
         expect(output).toContain(
           '<Button type="button" onClick={handleNext}>Next</Button>',
         );
       });
 
       it("wraps navigation in flex justify-between container", () => {
-        const { form, fieldConfigs } = createWizardForm();
-        const output = generateFormFile({
-          form,
-          fieldConfigs,
-          uiImportPath: "@/components/ui",
-        });
-
+        const output = generateWizardOutput();
         expect(output).toContain('<div className="flex justify-between">');
       });
     });
 
     describe("full wizard output", () => {
       it("generates complete valid wizard form component", () => {
-        const { form, fieldConfigs } = createWizardForm();
-        const output = generateFormFile({
-          form,
-          fieldConfigs,
-          uiImportPath: "@/components/ui",
-        });
+        const output = generateWizardOutput();
 
         // Verify top-level structure
         expect(output).toContain("'use client';");
