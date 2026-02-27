@@ -362,6 +362,16 @@ describe("emitField", () => {
         "z.record(z.string(), z.string()).optional()",
       );
     });
+
+    it("throws when metadata kind does not match record type", () => {
+      const field = makeField({
+        type: "record",
+        metadata: { kind: "string" },
+      });
+      expect(() => emitField(field)).toThrow(
+        'Field "test" has type "record" but metadata kind is "string"',
+      );
+    });
   });
 
   describe("optional and nullable wrapping", () => {
