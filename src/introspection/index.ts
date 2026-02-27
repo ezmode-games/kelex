@@ -6,5 +6,6 @@ export type {
   FieldMetadata,
   FieldType,
   FormDescriptor,
+  FormStep,
 } from "./types";
 export { type UnwrapResult, unwrapSchema } from "./unwrap";
