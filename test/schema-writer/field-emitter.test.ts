@@ -312,6 +312,58 @@ describe("emitField", () => {
     });
   });
 
+  describe("record fields", () => {
+    it("emits z.record() with scalar value", () => {
+      const field = makeField({
+        type: "record",
+        metadata: {
+          kind: "record",
+          valueDescriptor: makeField({
+            name: "value",
+            type: "number",
+            metadata: { kind: "number" },
+          }),
+        },
+      });
+      expect(emitField(field)).toBe("z.record(z.string(), z.number())");
+    });
+
+    it("emits z.record() with enum value", () => {
+      const field = makeField({
+        type: "record",
+        metadata: {
+          kind: "record",
+          valueDescriptor: makeField({
+            name: "value",
+            type: "enum",
+            metadata: { kind: "enum", values: ["low", "medium", "high"] },
+          }),
+        },
+      });
+      expect(emitField(field)).toBe(
+        'z.record(z.string(), z.enum(["low", "medium", "high"]))',
+      );
+    });
+
+    it("emits optional record", () => {
+      const field = makeField({
+        type: "record",
+        isOptional: true,
+        metadata: {
+          kind: "record",
+          valueDescriptor: makeField({
+            name: "value",
+            type: "string",
+            metadata: { kind: "string" },
+          }),
+        },
+      });
+      expect(emitField(field)).toBe(
+        "z.record(z.string(), z.string()).optional()",
+      );
+    });
+  });
+
   describe("optional and nullable wrapping", () => {
     it("wraps with .optional()", () => {
       const field = makeField({
@@ -562,15 +614,14 @@ describe("emitField", () => {
       expect(() => emitField(field)).toThrow('Unsupported field type "union"');
     });
 
-    it("throws on record type", () => {
+    it("throws on record type with mismatched metadata", () => {
       const field = makeField({
         type: "record",
-        metadata: {
-          kind: "record",
-          valueDescriptor: makeField({ name: "value" }),
-        },
+        metadata: { kind: "string" },
       });
-      expect(() => emitField(field)).toThrow('Unsupported field type "record"');
+      expect(() => emitField(field)).toThrow(
+        'Field "test" has type "record" but metadata kind is "string"',
+      );
     });
   });
 });

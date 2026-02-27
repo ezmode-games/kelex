@@ -209,22 +209,25 @@ describe("writeSchema", () => {
       );
     });
 
-    it("throws on unsupported record type", () => {
+    it("emits record type through writer", () => {
       const form = makeForm({
         fields: [
           makeField({
-            name: "map",
+            name: "scores",
             type: "record",
             metadata: {
               kind: "record",
-              valueDescriptor: makeField({ name: "value" }),
+              valueDescriptor: makeField({
+                name: "value",
+                type: "number",
+                metadata: { kind: "number" },
+              }),
             },
           }),
         ],
       });
-      expect(() => writeSchema({ form })).toThrow(
-        'Unsupported field type "record"',
-      );
+      const result = writeSchema({ form });
+      expect(result.code).toContain("scores: z.record(z.string(), z.number())");
     });
   });
 

@@ -343,6 +343,25 @@ describe("round-trip: schema -> introspect -> writeSchema -> eval -> introspect"
     }
   });
 
+  it("round-trips a record of numbers", () => {
+    const schema = z.object({
+      scores: z.record(z.string(), z.number()),
+    });
+    const { descriptor1, descriptor2 } = roundTrip(schema);
+
+    expect(descriptor2.fields[0].type).toBe("record");
+    expect(descriptor2.fields[0].name).toBe(descriptor1.fields[0].name);
+    expect(descriptor2.fields[0].metadata.kind).toBe("record");
+    if (
+      descriptor2.fields[0].metadata.kind === "record" &&
+      descriptor1.fields[0].metadata.kind === "record"
+    ) {
+      expect(descriptor2.fields[0].metadata.valueDescriptor.type).toBe(
+        descriptor1.fields[0].metadata.valueDescriptor.type,
+      );
+    }
+  });
+
   it("round-trips a complex multi-field schema", () => {
     const schema = z.object({
       name: z.string().min(1),
