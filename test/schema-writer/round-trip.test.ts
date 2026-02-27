@@ -401,14 +401,11 @@ describe("round-trip: schema -> introspect -> writeSchema -> eval -> introspect"
         }),
       ]),
     });
-    const { descriptor1, descriptor2 } = roundTrip(schema);
+    const { descriptor2 } = roundTrip(schema);
 
     const f2 = descriptor2.fields[0];
     expect(f2.type).toBe("union");
-    if (
-      f2.metadata.kind === "union" &&
-      descriptor1.fields[0].metadata.kind === "union"
-    ) {
+    if (f2.metadata.kind === "union") {
       expect(f2.metadata.discriminator).toBe("kind");
       expect(f2.metadata.variants).toHaveLength(3);
       expect(f2.metadata.variants[0].value).toBe("circle");

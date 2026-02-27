@@ -227,8 +227,7 @@ function emitDiscriminatedUnion(
 ): string {
   const variantExprs = variants.map((variant) => {
     const entries = variant.fields.map((child) => {
-      // The discriminator field was introspected as a regular string field.
-      // Reconstruct it as z.literal(value) for the discriminated union.
+      // The discriminator field introspects as a plain string; reconstruct as z.literal(value).
       if (child.name === discriminator) {
         return `${child.name}: z.literal(${JSON.stringify(variant.value)})`;
       }
@@ -244,9 +243,9 @@ function emitPlainUnion(
   variants: { value: string; fields: FieldDescriptor[] }[],
 ): string {
   const optionExprs = variants.map((variant) => {
-    // Detect synthetic scalar wrapping from the introspector:
-    // variants where value starts with "variant_" and fields has exactly 1
-    // field whose name starts with "option_" -> unwrap to bare scalar
+    // Synthetic scalar wrapping: the introspector wraps each scalar option in a
+    // single-field object with generated names ("variant_N" / "option_N").
+    // Unwrap these back to bare scalar expressions.
     const isSyntheticScalar =
       variant.value.startsWith("variant_") &&
       variant.fields.length === 1 &&
@@ -256,7 +255,6 @@ function emitPlainUnion(
       return emitField(variant.fields[0]);
     }
 
-    // Multi-field object variant: emit as z.object({...})
     const entries = variant.fields.map(
       (child) => `${child.name}: ${emitField(child)}`,
     );
