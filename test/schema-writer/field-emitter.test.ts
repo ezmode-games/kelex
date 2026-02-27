@@ -392,6 +392,35 @@ describe("emitField", () => {
       expect(emitField(field)).toBe("z.object({ x: z.number() }).nullable()");
     });
 
+    it("quotes property names that are not valid identifiers", () => {
+      const field = makeField({
+        type: "object",
+        metadata: {
+          kind: "object",
+          fields: [
+            makeField({
+              name: "my-field",
+              type: "string",
+              metadata: { kind: "string" },
+            }),
+            makeField({
+              name: "has spaces",
+              type: "number",
+              metadata: { kind: "number" },
+            }),
+            makeField({
+              name: "validName",
+              type: "boolean",
+              metadata: { kind: "boolean" },
+            }),
+          ],
+        },
+      });
+      expect(emitField(field)).toBe(
+        'z.object({ "my-field": z.string(), "has spaces": z.number(), validName: z.boolean() })',
+      );
+    });
+
     it("emits array of objects", () => {
       const field = makeField({
         type: "array",

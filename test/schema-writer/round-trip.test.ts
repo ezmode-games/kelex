@@ -143,6 +143,8 @@ describe("round-trip: schema -> introspect -> writeSchema -> eval -> introspect"
     const { descriptor1, descriptor2 } = roundTrip(schema);
 
     expect(descriptor2.fields[0].type).toBe("enum");
+    expect(descriptor2.fields[0].metadata.kind).toBe("enum");
+    expect(descriptor1.fields[0].metadata.kind).toBe("enum");
     if (
       descriptor2.fields[0].metadata.kind === "enum" &&
       descriptor1.fields[0].metadata.kind === "enum"
@@ -158,6 +160,7 @@ describe("round-trip: schema -> introspect -> writeSchema -> eval -> introspect"
     const { descriptor2 } = roundTrip(schema);
 
     expect(descriptor2.fields[0].type).toBe("array");
+    expect(descriptor2.fields[0].metadata.kind).toBe("array");
     if (descriptor2.fields[0].metadata.kind === "array") {
       expect(descriptor2.fields[0].metadata.element.type).toBe("string");
     }
@@ -170,11 +173,15 @@ describe("round-trip: schema -> introspect -> writeSchema -> eval -> introspect"
     const { descriptor1, descriptor2 } = roundTrip(schema);
 
     expect(descriptor2.fields[0].type).toBe("array");
+    expect(descriptor2.fields[0].metadata.kind).toBe("array");
+    expect(descriptor1.fields[0].metadata.kind).toBe("array");
     if (
       descriptor2.fields[0].metadata.kind === "array" &&
       descriptor1.fields[0].metadata.kind === "array"
     ) {
       expect(descriptor2.fields[0].metadata.element.type).toBe("enum");
+      expect(descriptor2.fields[0].metadata.element.metadata.kind).toBe("enum");
+      expect(descriptor1.fields[0].metadata.element.metadata.kind).toBe("enum");
       if (
         descriptor2.fields[0].metadata.element.metadata.kind === "enum" &&
         descriptor1.fields[0].metadata.element.metadata.kind === "enum"
@@ -228,6 +235,7 @@ describe("round-trip: schema -> introspect -> writeSchema -> eval -> introspect"
     const address = descriptor2.fields[0];
     expect(address.type).toBe("object");
     expect(address.name).toBe("address");
+    expect(address.metadata.kind).toBe("object");
     if (address.metadata.kind === "object") {
       expect(address.metadata.fields).toHaveLength(2);
       expect(address.metadata.fields[0].name).toBe("street");
@@ -251,9 +259,11 @@ describe("round-trip: schema -> introspect -> writeSchema -> eval -> introspect"
     expect(descriptor2.fields).toHaveLength(1);
     const company = descriptor2.fields[0];
     expect(company.type).toBe("object");
+    expect(company.metadata.kind).toBe("object");
     if (company.metadata.kind === "object") {
       const hq = company.metadata.fields[0];
       expect(hq.type).toBe("object");
+      expect(hq.metadata.kind).toBe("object");
       if (hq.metadata.kind === "object") {
         expect(hq.metadata.fields[0].name).toBe("city");
         expect(hq.metadata.fields[1].name).toBe("zip");
@@ -277,8 +287,10 @@ describe("round-trip: schema -> introspect -> writeSchema -> eval -> introspect"
     expect(descriptor2.fields).toHaveLength(1);
     const items = descriptor2.fields[0];
     expect(items.type).toBe("array");
+    expect(items.metadata.kind).toBe("array");
     if (items.metadata.kind === "array") {
       expect(items.metadata.element.type).toBe("object");
+      expect(items.metadata.element.metadata.kind).toBe("object");
       if (items.metadata.element.metadata.kind === "object") {
         const fields = items.metadata.element.metadata.fields;
         expect(fields).toHaveLength(2);

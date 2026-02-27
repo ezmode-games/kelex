@@ -1,5 +1,7 @@
 import type { FieldDescriptor } from "../introspection";
 
+export const VALID_IDENTIFIER = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
+
 const SUPPORTED_TYPES = new Set([
   "string",
   "number",
@@ -161,8 +163,11 @@ function emitObject(field: FieldDescriptor): string {
     );
   }
 
-  const entries = field.metadata.fields.map(
-    (child) => `${child.name}: ${emitField(child)}`,
-  );
+  const entries = field.metadata.fields.map((child) => {
+    const key = VALID_IDENTIFIER.test(child.name)
+      ? child.name
+      : JSON.stringify(child.name);
+    return `${key}: ${emitField(child)}`;
+  });
   return `z.object({ ${entries.join(", ")} })`;
 }
