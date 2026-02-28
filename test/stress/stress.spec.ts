@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { generate } from "../../src/codegen/generator";
+import { introspect } from "../../src/introspection";
+import { writeSchema } from "../../src/schema-writer/writer";
+import { evaluateSchemaCode } from "../helpers/evaluate-schema";
 
 import { patientIntakeSchema } from "./01-healthcare-patient-intake";
 import { productListingSchema } from "./02-ecommerce-product-listing";
@@ -39,7 +42,7 @@ const schemas: SchemaTestCase[] = [
     schema: loanApplicationSchema,
     expectedHardFeatures: [
       "discriminated union (loanDetails)",
-      ".refine() on root",
+      ".check() on root",
     ],
   },
   {
@@ -81,11 +84,7 @@ const schemas: SchemaTestCase[] = [
   {
     name: "08 Legal: Contract Intake",
     schema: contractIntakeSchema,
-    expectedHardFeatures: [
-      "branded type (CaseNumber)",
-      "pipeline/transform (MonetaryAmount)",
-      "nullish fields",
-    ],
+    expectedHardFeatures: ["branded type (CaseNumber)", "nullish fields"],
   },
   {
     name: "09 SaaS: User Settings",
@@ -108,7 +107,7 @@ const schemas: SchemaTestCase[] = [
     name: "11 Government: Tax Filing",
     schema: taxFilingSchema,
     expectedHardFeatures: [
-      ".superRefine() cross-field validation",
+      ".check() cross-field validation",
       "nested object (address, bankAccount, itemizedDeductions)",
       "array of discriminated unions (incomeSources)",
       "array of objects (dependents)",
@@ -117,10 +116,16 @@ const schemas: SchemaTestCase[] = [
   },
 ];
 
+const INTROSPECT_OPTS = {
+  formName: "TestForm",
+  schemaImportPath: "./schema",
+  schemaExportName: "testSchema",
+};
+
 describe("Stress test: complex Zod v4 schemas", () => {
   for (const testCase of schemas) {
     describe(testCase.name, () => {
-      it("should attempt to generate a form", () => {
+      it("should generate a form", () => {
         const opts = {
           schema: testCase.schema as Parameters<typeof generate>[0]["schema"],
           formName: `${testCase.name.replace(/[^a-zA-Z]/g, "")}Form`,
@@ -128,37 +133,46 @@ describe("Stress test: complex Zod v4 schemas", () => {
           schemaExportName: "schema",
         };
 
-        let result: ReturnType<typeof generate> | undefined;
-        let error: Error | undefined;
+        const result = generate(opts);
 
-        try {
-          result = generate(opts);
-        } catch (e) {
-          error = e as Error;
+        expect(result.fields.length).toBeGreaterThan(0);
+
+        console.log(`[CODEGEN] ${testCase.name}`);
+        console.log(`  Fields: ${result.fields.join(", ")}`);
+        if (result.warnings.length > 0) {
+          console.log(`  Warnings: ${result.warnings.join("; ")}`);
+        }
+        console.log(
+          `  Hard features: ${testCase.expectedHardFeatures.join(", ")}`,
+        );
+      });
+
+      it("should round-trip through schema writer", () => {
+        const descriptor1 = introspect(
+          testCase.schema as Parameters<typeof introspect>[0],
+          INTROSPECT_OPTS,
+        );
+
+        const { code } = writeSchema({ form: descriptor1 });
+        const roundTrippedSchema = evaluateSchemaCode(code);
+        const descriptor2 = introspect(roundTrippedSchema, INTROSPECT_OPTS);
+
+        // Field count must match
+        expect(descriptor2.fields).toHaveLength(descriptor1.fields.length);
+
+        // Each field: name and type must match
+        for (let i = 0; i < descriptor1.fields.length; i++) {
+          const f1 = descriptor1.fields[i];
+          const f2 = descriptor2.fields[i];
+          expect(f2.name).toBe(f1.name);
+          expect(f2.type).toBe(f1.type);
         }
 
-        // Log the outcome for reporting
-        if (error) {
-          console.log(`[FAIL] ${testCase.name}`);
-          console.log(`  Error: ${error.message}`);
-          console.log(
-            `  Hard features: ${testCase.expectedHardFeatures.join(", ")}`,
-          );
-        } else if (result) {
-          console.log(`[PASS] ${testCase.name}`);
-          console.log(`  Fields: ${result.fields.join(", ")}`);
-          if (result.warnings.length > 0) {
-            console.log(`  Warnings: ${result.warnings.join("; ")}`);
-          }
-          console.log(
-            `  Hard features: ${testCase.expectedHardFeatures.join(", ")}`,
-          );
-        }
-
-        // We expect this test to either pass or fail -- we just want to
-        // record the outcome. Mark it as passing either way so the suite
-        // gives us a full report.
-        expect(true).toBe(true);
+        console.log(`[ROUND-TRIP] ${testCase.name}`);
+        console.log(
+          `  Fields: ${descriptor1.fields.map((f) => f.name).join(", ")}`,
+        );
+        console.log(`  Field count: ${descriptor1.fields.length}`);
       });
     });
   }
