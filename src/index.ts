@@ -20,6 +20,7 @@ export type {
   FieldMetadata,
   FieldType,
   FormDescriptor,
+  FormStep,
   IntrospectOptions,
   UnwrapResult,
 } from "./introspection";

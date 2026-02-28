@@ -82,6 +82,21 @@ export interface FieldDescriptor {
   schemaRef?: string;
 }
 
+/** A single step in a multi-step (wizard) form */
+export interface FormStep {
+  /** Unique identifier for the step */
+  id: string;
+
+  /** Human-readable label shown in the step indicator */
+  label: string;
+
+  /** Optional description for the step */
+  description?: string;
+
+  /** Field names belonging to this step */
+  fields: string[];
+}
+
 /** Complete form descriptor */
 export interface FormDescriptor {
   /** Form name for the generated component */
@@ -98,4 +113,7 @@ export interface FormDescriptor {
 
   /** Warnings from introspection (e.g., skipped features) */
   warnings: string[];
+
+  /** Steps for multi-step (wizard) form generation. When undefined, a single-step form is generated. */
+  steps?: FormStep[];
 }
