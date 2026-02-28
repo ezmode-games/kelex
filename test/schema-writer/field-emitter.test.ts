@@ -615,6 +615,108 @@ describe("emitField", () => {
     });
   });
 
+  describe("schemaRef", () => {
+    it("returns the ref string directly when schemaRef is set", () => {
+      const field = makeField({
+        name: "address",
+        type: "object",
+        metadata: {
+          kind: "object",
+          fields: [
+            makeField({
+              name: "street",
+              type: "string",
+              metadata: { kind: "string" },
+            }),
+          ],
+        },
+        schemaRef: "addressSchema",
+      });
+      expect(emitField(field)).toBe("addressSchema");
+    });
+
+    it("chains .optional() when schemaRef is set with isOptional", () => {
+      const field = makeField({
+        name: "address",
+        type: "object",
+        isOptional: true,
+        metadata: { kind: "object", fields: [] },
+        schemaRef: "addressSchema",
+      });
+      expect(emitField(field)).toBe("addressSchema.optional()");
+    });
+
+    it("chains .nullable() when schemaRef is set with isNullable", () => {
+      const field = makeField({
+        name: "address",
+        type: "object",
+        isNullable: true,
+        metadata: { kind: "object", fields: [] },
+        schemaRef: "addressSchema",
+      });
+      expect(emitField(field)).toBe("addressSchema.nullable()");
+    });
+
+    it("chains .nullable().optional() when both flags are set", () => {
+      const field = makeField({
+        name: "address",
+        type: "object",
+        isOptional: true,
+        isNullable: true,
+        metadata: { kind: "object", fields: [] },
+        schemaRef: "addressSchema",
+      });
+      expect(emitField(field)).toBe("addressSchema.nullable().optional()");
+    });
+
+    it("ignores description when schemaRef is set", () => {
+      const field = makeField({
+        name: "address",
+        type: "object",
+        description: "Mailing address",
+        metadata: { kind: "object", fields: [] },
+        schemaRef: "addressSchema",
+      });
+      expect(emitField(field)).toBe("addressSchema");
+    });
+
+    it("throws on schemaRef with spaces", () => {
+      const field = makeField({
+        name: "address",
+        type: "object",
+        metadata: { kind: "object", fields: [] },
+        schemaRef: "foo bar",
+      });
+      expect(() => emitField(field)).toThrow(
+        'Invalid schemaRef "foo bar" for field "address"',
+      );
+    });
+
+    it("throws on schemaRef with special characters", () => {
+      const field = makeField({
+        name: "address",
+        type: "object",
+        metadata: { kind: "object", fields: [] },
+        schemaRef: "foo;bar",
+      });
+      expect(() => emitField(field)).toThrow(
+        'Invalid schemaRef "foo;bar" for field "address"',
+      );
+    });
+
+    it("throws on schemaRef starting with a digit", () => {
+      const field = makeField({
+        name: "address",
+        type: "object",
+        metadata: { kind: "object", fields: [] },
+        schemaRef: "1schema",
+      });
+      expect(() => emitField(field)).toThrow(
+        'Invalid schemaRef "1schema" for field "address"',
+      );
+    });
+  });
+
   describe("union fields", () => {
     it("emits z.discriminatedUnion() with 2 variants", () => {
       const field = makeField({

@@ -239,4 +239,385 @@ describe("writeSchema", () => {
       expect(result.code).toContain("});");
     });
   });
+
+  describe("embedded schemas", () => {
+    it("emits a single embedded schema before the main schema", () => {
+      const addressForm = makeForm({
+        name: "AddressForm",
+        schemaExportName: "addressSchema",
+        fields: [
+          makeField({
+            name: "street",
+            type: "string",
+            metadata: { kind: "string" },
+          }),
+          makeField({
+            name: "city",
+            type: "string",
+            metadata: { kind: "string" },
+          }),
+        ],
+      });
+
+      const mainForm = makeForm({
+        schemaExportName: "userSchema",
+        fields: [
+          makeField({
+            name: "name",
+            type: "string",
+            metadata: { kind: "string" },
+          }),
+          makeField({
+            name: "address",
+            type: "object",
+            metadata: { kind: "object", fields: [] },
+            schemaRef: "addressSchema",
+          }),
+        ],
+      });
+
+      const result = writeSchema({
+        form: mainForm,
+        embeddedSchemas: [{ form: addressForm }],
+      });
+
+      // Embedded schema appears before main schema
+      const addressIdx = result.code.indexOf("export const addressSchema");
+      const userIdx = result.code.indexOf("export const userSchema");
+      expect(addressIdx).toBeGreaterThan(-1);
+      expect(userIdx).toBeGreaterThan(-1);
+      expect(addressIdx).toBeLessThan(userIdx);
+
+      // Type exports for both
+      expect(result.code).toContain(
+        "export type Address = z.infer<typeof addressSchema>;",
+      );
+      expect(result.code).toContain(
+        "export type User = z.infer<typeof userSchema>;",
+      );
+
+      // Field uses identifier instead of inline
+      expect(result.code).toContain("address: addressSchema,");
+      expect(result.code).not.toContain("address: z.object(");
+    });
+
+    it("emits multiple independent embedded schemas", () => {
+      const addressForm = makeForm({
+        name: "AddressForm",
+        schemaExportName: "addressSchema",
+        fields: [
+          makeField({
+            name: "street",
+            type: "string",
+            metadata: { kind: "string" },
+          }),
+        ],
+      });
+
+      const phoneForm = makeForm({
+        name: "PhoneForm",
+        schemaExportName: "phoneSchema",
+        fields: [
+          makeField({
+            name: "number",
+            type: "string",
+            metadata: { kind: "string" },
+          }),
+        ],
+      });
+
+      const mainForm = makeForm({
+        schemaExportName: "contactSchema",
+        fields: [
+          makeField({
+            name: "address",
+            type: "object",
+            metadata: { kind: "object", fields: [] },
+            schemaRef: "addressSchema",
+          }),
+          makeField({
+            name: "phone",
+            type: "object",
+            metadata: { kind: "object", fields: [] },
+            schemaRef: "phoneSchema",
+          }),
+        ],
+      });
+
+      const result = writeSchema({
+        form: mainForm,
+        embeddedSchemas: [{ form: addressForm }, { form: phoneForm }],
+      });
+
+      // Both embedded schemas appear before main
+      const addrIdx = result.code.indexOf("export const addressSchema");
+      const phoneIdx = result.code.indexOf("export const phoneSchema");
+      const contactIdx = result.code.indexOf("export const contactSchema");
+      expect(addrIdx).toBeLessThan(contactIdx);
+      expect(phoneIdx).toBeLessThan(contactIdx);
+
+      // Type exports for all three
+      expect(result.code).toContain(
+        "export type Address = z.infer<typeof addressSchema>;",
+      );
+      expect(result.code).toContain(
+        "export type Phone = z.infer<typeof phoneSchema>;",
+      );
+      expect(result.code).toContain(
+        "export type Contact = z.infer<typeof contactSchema>;",
+      );
+    });
+
+    it("topologically sorts nested embedded schemas (A references B)", () => {
+      // locationSchema has no dependencies
+      const locationForm = makeForm({
+        name: "LocationForm",
+        schemaExportName: "locationSchema",
+        fields: [
+          makeField({
+            name: "lat",
+            type: "number",
+            metadata: { kind: "number" },
+          }),
+          makeField({
+            name: "lng",
+            type: "number",
+            metadata: { kind: "number" },
+          }),
+        ],
+      });
+
+      // addressSchema depends on locationSchema
+      const addressForm = makeForm({
+        name: "AddressForm",
+        schemaExportName: "addressSchema",
+        fields: [
+          makeField({
+            name: "street",
+            type: "string",
+            metadata: { kind: "string" },
+          }),
+          makeField({
+            name: "location",
+            type: "object",
+            metadata: { kind: "object", fields: [] },
+            schemaRef: "locationSchema",
+          }),
+        ],
+      });
+
+      const mainForm = makeForm({
+        schemaExportName: "userSchema",
+        fields: [
+          makeField({
+            name: "address",
+            type: "object",
+            metadata: { kind: "object", fields: [] },
+            schemaRef: "addressSchema",
+          }),
+        ],
+      });
+
+      // Pass schemas in WRONG order (address before location)
+      const result = writeSchema({
+        form: mainForm,
+        embeddedSchemas: [{ form: addressForm }, { form: locationForm }],
+      });
+
+      // locationSchema must appear before addressSchema
+      const locationIdx = result.code.indexOf("export const locationSchema");
+      const addressIdx = result.code.indexOf("export const addressSchema");
+      const userIdx = result.code.indexOf("export const userSchema");
+      expect(locationIdx).toBeLessThan(addressIdx);
+      expect(addressIdx).toBeLessThan(userIdx);
+    });
+
+    it("throws on circular references among embedded schemas", () => {
+      const schemaA = makeForm({
+        name: "AForm",
+        schemaExportName: "schemaA",
+        fields: [
+          makeField({
+            name: "b",
+            type: "object",
+            metadata: { kind: "object", fields: [] },
+            schemaRef: "schemaB",
+          }),
+        ],
+      });
+
+      const schemaB = makeForm({
+        name: "BForm",
+        schemaExportName: "schemaB",
+        fields: [
+          makeField({
+            name: "a",
+            type: "object",
+            metadata: { kind: "object", fields: [] },
+            schemaRef: "schemaA",
+          }),
+        ],
+      });
+
+      const mainForm = makeForm({
+        schemaExportName: "mainSchema",
+        fields: [
+          makeField({
+            name: "a",
+            type: "object",
+            metadata: { kind: "object", fields: [] },
+            schemaRef: "schemaA",
+          }),
+        ],
+      });
+
+      expect(() =>
+        writeSchema({
+          form: mainForm,
+          embeddedSchemas: [{ form: schemaA }, { form: schemaB }],
+        }),
+      ).toThrow("Circular reference detected");
+    });
+
+    it("backward compatible: no embedded schemas works as before", () => {
+      const form = makeForm({
+        schemaExportName: "userSchema",
+        fields: [
+          makeField({
+            name: "name",
+            type: "string",
+            metadata: { kind: "string" },
+          }),
+        ],
+      });
+
+      const result = writeSchema({ form });
+      expect(result.code).toContain('import { z } from "zod/v4";');
+      expect(result.code).toContain("export const userSchema = z.object({");
+      expect(result.code).toContain("  name: z.string(),");
+      expect(result.code).toContain(
+        "export type User = z.infer<typeof userSchema>;",
+      );
+      expect(result.warnings).toEqual([]);
+    });
+
+    it("backward compatible: empty embeddedSchemas array works as before", () => {
+      const form = makeForm({
+        schemaExportName: "userSchema",
+        fields: [
+          makeField({
+            name: "name",
+            type: "string",
+            metadata: { kind: "string" },
+          }),
+        ],
+      });
+
+      const resultWithout = writeSchema({ form });
+      const resultWith = writeSchema({ form, embeddedSchemas: [] });
+      expect(resultWith.code).toBe(resultWithout.code);
+    });
+
+    it("emits only one import statement for the whole file", () => {
+      const addressForm = makeForm({
+        name: "AddressForm",
+        schemaExportName: "addressSchema",
+        fields: [
+          makeField({
+            name: "street",
+            type: "string",
+            metadata: { kind: "string" },
+          }),
+        ],
+      });
+
+      const mainForm = makeForm({
+        schemaExportName: "userSchema",
+        fields: [
+          makeField({
+            name: "address",
+            type: "object",
+            metadata: { kind: "object", fields: [] },
+            schemaRef: "addressSchema",
+          }),
+        ],
+      });
+
+      const result = writeSchema({
+        form: mainForm,
+        embeddedSchemas: [{ form: addressForm }],
+      });
+
+      const importCount = (result.code.match(/import \{ z \}/g) ?? []).length;
+      expect(importCount).toBe(1);
+    });
+
+    it("produces correct full output matching expected format", () => {
+      const addressForm = makeForm({
+        name: "AddressForm",
+        schemaExportName: "addressSchema",
+        fields: [
+          makeField({
+            name: "street",
+            type: "string",
+            metadata: { kind: "string" },
+          }),
+          makeField({
+            name: "city",
+            type: "string",
+            metadata: { kind: "string" },
+          }),
+          makeField({
+            name: "zip",
+            type: "string",
+            metadata: { kind: "string" },
+          }),
+        ],
+      });
+
+      const mainForm = makeForm({
+        schemaExportName: "userSchema",
+        fields: [
+          makeField({
+            name: "name",
+            type: "string",
+            metadata: { kind: "string" },
+          }),
+          makeField({
+            name: "address",
+            type: "object",
+            metadata: { kind: "object", fields: [] },
+            schemaRef: "addressSchema",
+          }),
+        ],
+      });
+
+      const result = writeSchema({
+        form: mainForm,
+        embeddedSchemas: [{ form: addressForm }],
+      });
+
+      const expected = [
+        'import { z } from "zod/v4";',
+        "",
+        "export const addressSchema = z.object({",
+        "  street: z.string(),",
+        "  city: z.string(),",
+        "  zip: z.string(),",
+        "});",
+        "",
+        "export type Address = z.infer<typeof addressSchema>;",
+        "",
+        "export const userSchema = z.object({",
+        "  name: z.string(),",
+        "  address: addressSchema,",
+        "});",
+        "",
+        "export type User = z.infer<typeof userSchema>;",
+        "",
+      ].join("\n");
+
+      expect(result.code).toBe(expected);
+    });
+  });
 });

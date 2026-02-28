@@ -1,3 +1,7 @@
 export { emitField } from "./field-emitter";
-export type { SchemaWriterOptions, SchemaWriterResult } from "./types";
+export type {
+  EmbeddedSchema,
+  SchemaWriterOptions,
+  SchemaWriterResult,
+} from "./types";
 export { writeSchema } from "./writer";
