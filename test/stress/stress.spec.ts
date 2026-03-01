@@ -972,6 +972,10 @@ describe("Stress test: complex Zod v4 schemas", () => {
 
         for (const expected of testCase.expectedFields) {
           const field = descriptor.fields.find((f) => f.name === expected.name);
+          expect(
+            field,
+            `missing field for component mapping: ${expected.name}`,
+          ).toBeDefined();
           if (!field) continue;
 
           const config = resolveField(field);
