@@ -1,5 +1,11 @@
 # @ezmode-games/kelex
 
+## 0.1.2
+
+### Patch Changes
+
+- Configure npm OIDC trusted publishing for automated releases
+
 ## 0.1.1
 
 ### Patch Changes
